@@ -1,61 +1,284 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-
-type Operation = '+' | '-' | '*' | '/';
-
-interface GameState {
-  digits: number[];
-  target: number;
-  selectedIndices: number[];
-  history: Array<{ operation: Operation; operands: [number, number]; result: number }>;
-}
-
-function generatePuzzle(): { digits: number[]; target: number } {
-  // Generate 4 random single-digit numbers (1-9)
-  const digits: number[] = [];
-  for (let i = 0; i < 4; i++) {
-    digits.push(Math.floor(Math.random() * 9) + 1);
-  }
-  
-  // For now, generate a random target between 20 and 100
-  // In a full implementation, you'd want to ensure the target is solvable
-  const target = Math.floor(Math.random() * 80) + 20;
-  
-  return { digits, target };
-}
-
-function performOperation(a: number, b: number, operation: Operation): number | null {
-  switch (operation) {
-    case '+':
-      return a + b;
-    case '-':
-      return a - b;
-    case '*':
-      return a * b;
-    case '/':
-      // Only allow division if result is a whole number
-      if (b === 0) return null;
-      const result = a / b;
-      return Number.isInteger(result) ? result : null;
-    default:
-      return null;
-  }
-}
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Alert, Animated } from 'react-native';
+import { useFonts } from 'expo-font';
+import { Operation, Difficulty, GameState, Puzzle } from './types';
+import { getRandomPuzzle, getPuzzlesByDifficulty, getPuzzleByIndex, getPuzzleKey, performOperation, AFFIRMATIONS } from './utils';
+import MainMenuScreen from './Screens/MainMenuScreen';
+import GameScreen from './Screens/GameScreen';
+import LevelLibraryScreen from './Screens/LevelLibraryScreen';
 
 export default function App() {
-  const [gameState, setGameState] = useState<GameState>(() => {
-    const puzzle = generatePuzzle();
-    return {
+  const [fontsLoaded] = useFonts({
+    'Digital-7-Mono': require('./assets/fonts/digital-7-mono.ttf'),
+  });
+
+  const [showMenu, setShowMenu] = useState(true);
+  const [showLevelLibrary, setShowLevelLibrary] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('easy');
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState<number | null>(null);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animatingDigit, setAnimatingDigit] = useState<number | null>(null);
+  const animatedPosition = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const animatedScale = useRef(new Animated.Value(1)).current;
+  const animatedOpacity = useRef(new Animated.Value(1)).current;
+  const targetPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const digitPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const targetContainerRef = useRef<View>(null);
+  const digitContainerRef = useRef<View>(null);
+  const animatingDigitButtonRef = useRef<any>(null);
+  const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set());
+  const [libraryTab, setLibraryTab] = useState<Difficulty>('easy');
+
+  const startGame = () => {
+    if (!selectedDifficulty) return;
+    const puzzle = getRandomPuzzle(selectedDifficulty);
+    const puzzles = getPuzzlesByDifficulty(selectedDifficulty);
+    const index = puzzles.findIndex(p => 
+      p.digits.length === puzzle.digits.length &&
+      p.digits.every((d, i) => d === puzzle.digits[i]) &&
+      p.target === puzzle.target
+    );
+    
+    setDifficulty(selectedDifficulty);
+    setCurrentPuzzleIndex(index);
+    setGameState({
       digits: puzzle.digits,
       target: puzzle.target,
       selectedIndices: [],
+      firstSelectedIndex: null,
+      secondSelectedIndex: null,
+      selectedOperation: null,
       history: [],
-    };
-  });
+    });
+    setShowMenu(false);
+    setShowLevelLibrary(false);
+  };
+
+  const loadPuzzleByIndex = (index: number) => {
+    if (difficulty !== null) {
+      const puzzle = getPuzzleByIndex(difficulty, index);
+      if (puzzle) {
+        setCurrentPuzzleIndex(index);
+        setGameState({
+          digits: puzzle.digits,
+          target: puzzle.target,
+          selectedIndices: [],
+          firstSelectedIndex: null,
+          secondSelectedIndex: null,
+          selectedOperation: null,
+          history: [],
+        });
+        setShowSuccessBanner(false);
+        setIsAnimating(false);
+        setAnimatingDigit(null);
+      }
+    }
+  };
+
+  const goToNextLevel = () => {
+    if (difficulty !== null && currentPuzzleIndex !== null) {
+      const puzzles = getPuzzlesByDifficulty(difficulty);
+      const nextIndex = currentPuzzleIndex + 1;
+      if (nextIndex < puzzles.length) {
+        loadPuzzleByIndex(nextIndex);
+      }
+    }
+  };
+
+  const goToPreviousLevel = () => {
+    if (difficulty !== null && currentPuzzleIndex !== null) {
+      const prevIndex = currentPuzzleIndex - 1;
+      if (prevIndex >= 0) {
+        loadPuzzleByIndex(prevIndex);
+      }
+    }
+  };
+
+  const handleSuccessBannerDismiss = () => {
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+    setShowSuccessBanner(false);
+    goToNextLevel();
+  };
+
+  useEffect(() => {
+    if (showSuccessBanner) {
+      // Auto-advance after 2.5 seconds
+      successTimeoutRef.current = setTimeout(() => {
+        if (successTimeoutRef.current) {
+          clearTimeout(successTimeoutRef.current);
+          successTimeoutRef.current = null;
+        }
+        setShowSuccessBanner(false);
+        goToNextLevel();
+      }, 2500);
+
+      return () => {
+        if (successTimeoutRef.current) {
+          clearTimeout(successTimeoutRef.current);
+        }
+      };
+    }
+  }, [showSuccessBanner, difficulty]);
+
+  const returnToMenu = () => {
+    setShowMenu(true);
+    setShowLevelLibrary(false);
+    setDifficulty(null);
+    setGameState(null);
+    setCurrentPuzzleIndex(null);
+  };
+
+  const openLevelLibrary = () => {
+    setShowLevelLibrary(true);
+    setShowMenu(false);
+  };
+
+  const closeLevelLibrary = () => {
+    setShowLevelLibrary(false);
+    if (!gameState) {
+      setShowMenu(true);
+    }
+  };
+
+  const handleSelectPuzzle = (selectedDifficulty: Difficulty, puzzle: Puzzle, index: number) => {
+    setSelectedDifficulty(selectedDifficulty);
+    setDifficulty(selectedDifficulty);
+    setCurrentPuzzleIndex(index);
+    setGameState({
+      digits: puzzle.digits,
+      target: puzzle.target,
+      selectedIndices: [],
+      firstSelectedIndex: null,
+      secondSelectedIndex: null,
+      selectedOperation: null,
+      history: [],
+    });
+    setShowLevelLibrary(false);
+    setShowMenu(false);
+  };
+
+  if (!fontsLoaded) {
+    return null; // Show loading state while fonts load
+  }
+
+  if (showLevelLibrary) {
+    return (
+      <LevelLibraryScreen
+        libraryTab={libraryTab}
+        onTabChange={setLibraryTab}
+        onClose={closeLevelLibrary}
+        onReturnToMenu={returnToMenu}
+        onSelectPuzzle={handleSelectPuzzle}
+        completedPuzzles={completedPuzzles}
+      />
+    );
+  }
+
+  if (showMenu || !gameState) {
+    return (
+      <MainMenuScreen
+        selectedDifficulty={selectedDifficulty}
+        onDifficultyChange={setSelectedDifficulty}
+        onStartGame={startGame}
+        onOpenLevelLibrary={openLevelLibrary}
+      />
+    );
+  }
 
   const handleDigitPress = (index: number) => {
+    if (!gameState) return;
     setGameState((prev) => {
+      if (!prev) return prev;
+      
+      // New method: if operation is selected first, then first number, then second number - perform operation
+      if (prev.selectedOperation !== null && prev.firstSelectedIndex !== null && prev.secondSelectedIndex === null) {
+        if (prev.firstSelectedIndex === index) {
+          // Deselect first number if clicking it again
+          return { ...prev, firstSelectedIndex: null };
+        }
+        
+        // Set second selected index, then perform operation
+        const secondIndex = index;
+        const a = prev.digits[prev.firstSelectedIndex];
+        const b = prev.digits[secondIndex];
+        const result = performOperation(a, b, prev.selectedOperation);
+        
+        if (result === null || result < 0) {
+          Alert.alert('Invalid Operation', 'This operation results in an invalid number. Please try a different operation.');
+          // Deselect all tiles on invalid operation
+          return {
+            ...prev,
+            firstSelectedIndex: null,
+            secondSelectedIndex: null,
+            selectedIndices: [],
+            selectedOperation: null,
+          };
+        }
+        
+        return performOperationAndUpdateState(prev, prev.firstSelectedIndex, secondIndex, a, b, prev.selectedOperation, result);
+      }
+      
+      // New method: if operation is selected first, then select first number
+      if (prev.selectedOperation !== null && prev.firstSelectedIndex === null) {
+        return { ...prev, firstSelectedIndex: index };
+      }
+      
+      // New method: if we have first number and operator selected, select second number and perform operation
+      if (prev.firstSelectedIndex !== null && prev.selectedOperation !== null) {
+        if (prev.firstSelectedIndex === index) {
+          // Deselect first number if clicking it again
+          return { ...prev, firstSelectedIndex: null, selectedOperation: null, secondSelectedIndex: null };
+        }
+        
+        // Set second selected index for visual feedback, then perform operation
+        const secondIndex = index;
+        const a = prev.digits[prev.firstSelectedIndex];
+        const b = prev.digits[secondIndex];
+        const result = performOperation(a, b, prev.selectedOperation);
+        
+        if (result === null || result < 0) {
+          Alert.alert('Invalid Operation', 'This operation results in an invalid number. Please try a different operation.');
+          // Deselect all tiles on invalid operation
+          return {
+            ...prev,
+            firstSelectedIndex: null,
+            secondSelectedIndex: null,
+            selectedIndices: [],
+            selectedOperation: null,
+          };
+        }
+        
+        return performOperationAndUpdateState(prev, prev.firstSelectedIndex, secondIndex, a, b, prev.selectedOperation, result);
+      }
+      
+      // New method: if we have first number selected but no operator, allow selecting second number
+      if (prev.firstSelectedIndex !== null && prev.selectedOperation === null) {
+        if (prev.firstSelectedIndex === index) {
+          // Deselect first number
+          return { ...prev, firstSelectedIndex: null, secondSelectedIndex: null };
+        }
+        // If second number is already selected and clicking it again, deselect it
+        if (prev.secondSelectedIndex === index) {
+          return { ...prev, secondSelectedIndex: null };
+        }
+        // Select or change second selection
+        return { ...prev, secondSelectedIndex: index };
+      }
+      
+      // New method: if nothing selected, select first number
+      if (prev.firstSelectedIndex === null && prev.selectedOperation === null) {
+        return { ...prev, firstSelectedIndex: index };
+      }
+      
+      // Old method: select two numbers
       const newIndices = [...prev.selectedIndices];
       const existingIndex = newIndices.indexOf(index);
       
@@ -71,295 +294,377 @@ export default function App() {
     });
   };
 
-  const handleOperationPress = (operation: Operation) => {
-    if (gameState.selectedIndices.length !== 2) {
-      Alert.alert('Select Two Numbers', 'Please select exactly two numbers to perform an operation.');
-      return;
+  const performOperationAndUpdateState = (
+    prev: GameState,
+    index1: number,
+    index2: number,
+    a: number,
+    b: number,
+    operation: Operation,
+    result: number
+  ): GameState => {
+    // Store the previous digits state before modification
+    const previousDigits = [...prev.digits];
+    
+    const newDigits = [...prev.digits];
+    // Remove the two selected digits and add the result
+    // Sort indices in descending order to remove from end first
+    const sortedIndices = [index1, index2].sort((a, b) => b - a);
+    sortedIndices.forEach((idx) => newDigits.splice(idx, 1));
+    newDigits.push(result);
+
+    const newHistory = [...prev.history, {
+      operation,
+      operands: [a, b] as [number, number],
+      result: result,
+      previousDigits: previousDigits,
+    }];
+
+    // Check win condition
+    if (newDigits.length === 1 && newDigits[0] === prev.target) {
+      // Wait half a second to show the final tile, then start animation
+      setTimeout(() => {
+        setIsAnimating(true);
+        setAnimatingDigit(newDigits[0]);
+        
+        // Force layout measurement
+        const measurePositions = () => {
+          let targetMeasured = false;
+          let digitMeasured = false;
+          
+          const checkAndStart = () => {
+            if (targetMeasured && digitMeasured) {
+              startAnimation();
+            }
+          };
+          
+          // Measure target position
+          if (targetContainerRef.current) {
+            targetContainerRef.current.measure((fx: number, fy: number, fwidth: number, fheight: number, pageX: number, pageY: number) => {
+              targetPositionRef.current = {
+                x: pageX + fwidth / 2 - 37.5,
+                y: pageY + fheight / 2 - 37.5,
+              };
+              targetMeasured = true;
+              checkAndStart();
+            });
+          } else {
+            // Retry if ref not ready
+            setTimeout(measurePositions, 50);
+            return;
+          }
+          
+          // Measure digit position
+          if (animatingDigitButtonRef.current) {
+            animatingDigitButtonRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+              digitPositionRef.current = {
+                x: pageX + width / 2 - 37.5,
+                y: pageY + height / 2 - 37.5,
+              };
+              digitMeasured = true;
+              checkAndStart();
+            });
+          } else {
+            // Retry if ref not ready
+            setTimeout(measurePositions, 50);
+          }
+        };
+        
+        const startAnimation = () => {
+          if (digitPositionRef.current && targetPositionRef.current) {
+            const startX = digitPositionRef.current.x;
+            const startY = digitPositionRef.current.y;
+            const endX = targetPositionRef.current.x;
+            const endY = targetPositionRef.current.y;
+            
+            // Validate positions are reasonable (not 0,0 or negative)
+            if (startX <= 0 || startY <= 0 || endX <= 0 || endY <= 0) {
+              // Fallback: skip animation and show banner directly
+              handleAnimationComplete();
+              return;
+            }
+            
+            // Set initial position
+            animatedPosition.setValue({ x: startX, y: startY });
+            animatedScale.setValue(1);
+            animatedOpacity.setValue(1);
+            
+            // Animate to target
+            Animated.parallel([
+              Animated.timing(animatedPosition, {
+                toValue: { x: endX, y: endY },
+                duration: 800,
+                useNativeDriver: true,
+              }),
+              Animated.sequence([
+                Animated.timing(animatedScale, {
+                  toValue: 1.2,
+                  duration: 400,
+                  useNativeDriver: true,
+                }),
+                Animated.timing(animatedScale, {
+                  toValue: 0.3,
+                  duration: 400,
+                  useNativeDriver: true,
+                }),
+              ]),
+              Animated.timing(animatedOpacity, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+              }),
+            ]).start(() => {
+              handleAnimationComplete();
+            });
+          } else {
+            // Retry if positions not ready yet
+            setTimeout(measurePositions, 50);
+          }
+        };
+        
+        const handleAnimationComplete = () => {
+          // Mark puzzle as completed and show success banner
+          if (difficulty && currentPuzzleIndex !== null) {
+            const puzzleKey = getPuzzleKey(difficulty, currentPuzzleIndex);
+            setCompletedPuzzles(prev => new Set([...prev, puzzleKey]));
+          }
+          setIsAnimating(false);
+          setAnimatingDigit(null);
+          const randomAffirmation = AFFIRMATIONS[Math.floor(Math.random() * AFFIRMATIONS.length)];
+          setSuccessMessage(randomAffirmation);
+          setShowSuccessBanner(true);
+        };
+        
+        // Start measuring positions
+        setTimeout(measurePositions, 100);
+      }, 500);
     }
 
-    const [index1, index2] = gameState.selectedIndices;
-    const a = gameState.digits[index1];
-    const b = gameState.digits[index2];
+    // Check lose condition (only one number left but it's not the target)
+    if (newDigits.length === 1 && newDigits[0] !== prev.target) {
+      setTimeout(() => {
+        Alert.alert('Game Over', `You ended with ${newDigits[0]}, but the target was ${prev.target}.`, [
+          {
+            text: 'Try Again',
+            onPress: () => {
+              if (currentPuzzleIndex !== null) {
+                loadPuzzleByIndex(currentPuzzleIndex);
+              }
+            },
+          },
+          {
+            text: 'Menu',
+            onPress: () => {
+              returnToMenu();
+            },
+          },
+        ]);
+      }, 100);
+    }
 
-    const result = performOperation(a, b, operation);
+    return {
+      digits: newDigits,
+      target: prev.target,
+      selectedIndices: [],
+      firstSelectedIndex: null,
+      secondSelectedIndex: null,
+      selectedOperation: null,
+      history: newHistory,
+    };
+  };
+
+  const handleOperationPress = (operation: Operation) => {
+    if (!gameState) return;
     
-    if (result === null || result < 0) {
-      Alert.alert('Invalid Operation', 'This operation results in an invalid number. Please try a different operation.');
+    // New method 4: if operation is selected first, then both numbers are selected, perform operation
+    if (gameState.selectedOperation !== null && gameState.firstSelectedIndex !== null && gameState.secondSelectedIndex !== null) {
+      const index1 = gameState.firstSelectedIndex;
+      const index2 = gameState.secondSelectedIndex;
+      const a = gameState.digits[index1];
+      const b = gameState.digits[index2];
+
+      const result = performOperation(a, b, gameState.selectedOperation);
+      
+      if (result === null || result < 0) {
+        Alert.alert('Invalid Operation', 'This operation results in an invalid number. Please try a different operation.');
+        // Deselect all tiles on invalid operation
+        setGameState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            firstSelectedIndex: null,
+            secondSelectedIndex: null,
+            selectedIndices: [],
+            selectedOperation: null,
+          };
+        });
+        return;
+      }
+
+      setGameState((prev) => {
+        if (!prev) return prev;
+        return performOperationAndUpdateState(prev, index1, index2, a, b, gameState.selectedOperation!, result);
+      });
+      return;
+    }
+    
+    // New method 3: if we have both first and second number selected (but no operator), perform operation
+    if (gameState.firstSelectedIndex !== null && gameState.secondSelectedIndex !== null && gameState.selectedOperation === null) {
+      const index1 = gameState.firstSelectedIndex;
+      const index2 = gameState.secondSelectedIndex;
+      const a = gameState.digits[index1];
+      const b = gameState.digits[index2];
+
+      const result = performOperation(a, b, operation);
+      
+      if (result === null || result < 0) {
+        Alert.alert('Invalid Operation', 'This operation results in an invalid number. Please try a different operation.');
+        // Deselect all tiles on invalid operation
+        setGameState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            firstSelectedIndex: null,
+            secondSelectedIndex: null,
+            selectedIndices: [],
+            selectedOperation: null,
+          };
+        });
+        return;
+      }
+
+      setGameState((prev) => {
+        if (!prev) return prev;
+        return performOperationAndUpdateState(prev, index1, index2, a, b, operation, result);
+      });
+      return;
+    }
+    
+    // New method 2: if we have first number selected (but no second), just set the operator
+    if (gameState.firstSelectedIndex !== null && gameState.secondSelectedIndex === null) {
+      setGameState((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          selectedOperation: operation,
+        };
+      });
+      return;
+    }
+    
+    // New method 1: if nothing is selected, allow selecting operation first
+    if (gameState.firstSelectedIndex === null && gameState.secondSelectedIndex === null && gameState.selectedOperation === null) {
+      setGameState((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          selectedOperation: operation,
+        };
+      });
+      return;
+    }
+    
+    // Old method: if we have two numbers selected in selectedIndices, perform operation
+    if (gameState.selectedIndices.length === 2) {
+      const [index1, index2] = gameState.selectedIndices;
+      const a = gameState.digits[index1];
+      const b = gameState.digits[index2];
+
+      const result = performOperation(a, b, operation);
+      
+      if (result === null || result < 0) {
+        Alert.alert('Invalid Operation', 'This operation results in an invalid number. Please try a different operation.');
+        // Deselect all tiles on invalid operation
+        setGameState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            firstSelectedIndex: null,
+            secondSelectedIndex: null,
+            selectedIndices: [],
+            selectedOperation: null,
+          };
+        });
+        return;
+      }
+
+      setGameState((prev) => {
+        if (!prev) return prev;
+        return performOperationAndUpdateState(prev, index1, index2, a, b, operation, result);
+      });
+      return;
+    }
+    
+    Alert.alert('Select Numbers First', 'Please select one or two numbers, then choose an operation.');
+  };
+
+  const handleUndo = () => {
+    if (!gameState || gameState.history.length === 0) {
       return;
     }
 
     setGameState((prev) => {
-      const newDigits = [...prev.digits];
-      // Remove the two selected digits and add the result
-      // Sort indices in descending order to remove from end first
-      const sortedIndices = [...prev.selectedIndices].sort((a, b) => b - a);
-      sortedIndices.forEach((idx) => newDigits.splice(idx, 1));
-      newDigits.push(result);
-
-      const newHistory = [...prev.history, {
-        operation,
-        operands: [a, b],
-        result: result,
-      }];
-
-      // Check win condition
-      if (newDigits.length === 1 && newDigits[0] === prev.target) {
-        setTimeout(() => {
-          Alert.alert('Success!', `You reached the target number ${prev.target}!`, [
-            {
-              text: 'New Game',
-              onPress: () => {
-                const puzzle = generatePuzzle();
-                setGameState({
-                  digits: puzzle.digits,
-                  target: puzzle.target,
-                  selectedIndices: [],
-                  history: [],
-                });
-              },
-            },
-          ]);
-        }, 100);
-      }
-
-      // Check lose condition (only one number left but it's not the target)
-      if (newDigits.length === 1 && newDigits[0] !== prev.target) {
-        setTimeout(() => {
-          Alert.alert('Game Over', `You ended with ${newDigits[0]}, but the target was ${prev.target}.`, [
-            {
-              text: 'Try Again',
-              onPress: () => {
-                const puzzle = generatePuzzle();
-                setGameState({
-                  digits: puzzle.digits,
-                  target: puzzle.target,
-                  selectedIndices: [],
-                  history: [],
-                });
-              },
-            },
-          ]);
-        }, 100);
-      }
-
+      if (!prev) return prev;
+      const lastEntry = prev.history[prev.history.length - 1];
+      
+      // Simply restore the previous digits array - this preserves exact order and positions
+      const newDigits = [...lastEntry.previousDigits];
+      
+      // Remove the last history entry
+      const newHistory = prev.history.slice(0, -1);
+      
       return {
+        ...prev,
         digits: newDigits,
-        target: prev.target,
-        selectedIndices: [],
         history: newHistory,
+        selectedIndices: [],
+        firstSelectedIndex: null,
+        secondSelectedIndex: null,
+        selectedOperation: null,
       };
     });
   };
 
-  const handleReset = () => {
-    const puzzle = generatePuzzle();
-    setGameState({
-      digits: puzzle.digits,
-      target: puzzle.target,
-      selectedIndices: [],
-      history: [],
-    });
+
+  // Update target position ref when layout changes
+  const updateTargetPosition = () => {
+    if (targetContainerRef.current) {
+      targetContainerRef.current.measure((fx: number, fy: number, fwidth: number, fheight: number, pageX: number, pageY: number) => {
+        targetPositionRef.current = {
+          x: pageX + fwidth / 2 - 37.5,
+          y: pageY + fheight / 2 - 37.5,
+        };
+      });
+    }
   };
 
-  const operations: Operation[] = ['+', '-', '*', '/'];
+  if (!gameState || !difficulty) {
+    return null;
+  }
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="auto" />
-      
-      <Text style={styles.title}>Number Brain</Text>
-      
-      <View style={styles.targetContainer}>
-        <Text style={styles.targetLabel}>Target:</Text>
-        <Text style={styles.targetNumber}>{gameState.target}</Text>
-      </View>
-
-      <View style={styles.digitsContainer}>
-        {gameState.digits.map((digit, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.digitButton,
-              gameState.selectedIndices.includes(index) && styles.digitButtonSelected,
-            ]}
-            onPress={() => handleDigitPress(index)}
-          >
-            <Text style={[
-              styles.digitText,
-              gameState.selectedIndices.includes(index) && styles.digitTextSelected,
-            ]}>{digit}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.operationsContainer}>
-        {operations.map((op) => (
-          <TouchableOpacity
-            key={op}
-            style={styles.operationButton}
-            onPress={() => handleOperationPress(op)}
-          >
-            <Text style={styles.operationText}>{op}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {gameState.history.length > 0 && (
-        <View style={styles.historyContainer}>
-          <Text style={styles.historyTitle}>History:</Text>
-          {gameState.history.slice(-3).map((entry, index) => (
-            <Text key={index} style={styles.historyText}>
-              {entry.operands[0]} {entry.operation} {entry.operands[1]} = {entry.result}
-            </Text>
-          ))}
-        </View>
-      )}
-
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Text style={styles.resetButtonText}>New Game</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <GameScreen
+      gameState={gameState}
+      difficulty={difficulty}
+      currentPuzzleIndex={currentPuzzleIndex}
+      showSuccessBanner={showSuccessBanner}
+      successMessage={successMessage}
+      isAnimating={isAnimating}
+      animatingDigit={animatingDigit}
+      onDigitPress={handleDigitPress}
+      onOperationPress={handleOperationPress}
+      onUndo={handleUndo}
+      onReturnToMenu={returnToMenu}
+      onOpenLevelLibrary={openLevelLibrary}
+      onGoToNextLevel={goToNextLevel}
+      onGoToPreviousLevel={goToPreviousLevel}
+      onSuccessBannerDismiss={handleSuccessBannerDismiss}
+      targetContainerRef={targetContainerRef}
+      digitContainerRef={digitContainerRef}
+      animatingDigitButtonRef={animatingDigitButtonRef}
+      animatedPosition={animatedPosition}
+      animatedScale={animatedScale}
+      animatedOpacity={animatedOpacity}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 25,
-  },
-  targetContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 35,
-    backgroundColor: '#fff',
-    padding: 18,
-    borderRadius: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  targetLabel: {
-    fontSize: 22,
-    color: '#666',
-    marginRight: 12,
-    fontWeight: '600',
-  },
-  targetNumber: {
-    fontSize: 34,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  digitsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginBottom: 30,
-  },
-  digitButton: {
-    width: 75,
-    height: 75,
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  digitButtonSelected: {
-    backgroundColor: '#4CAF50',
-  },
-  digitText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  digitTextSelected: {
-    color: '#fff',
-  },
-  operationsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 30,
-  },
-  operationButton: {
-    width: 65,
-    height: 65,
-    backgroundColor: '#2196F3',
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  operationText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  historyContainer: {
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 16,
-    marginBottom: 20,
-    width: '100%',
-    maxWidth: 380,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  historyTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#666',
-    marginBottom: 8,
-  },
-  historyText: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 4,
-  },
-  controlsContainer: {
-    marginTop: 20,
-  },
-  resetButton: {
-    backgroundColor: '#FF9800',
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    borderRadius: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  resetButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-});
-
