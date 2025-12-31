@@ -461,14 +461,14 @@ const styles = StyleSheet.create({
   undoButtonContainer: {
     position: 'absolute',
     left: BUTTON_SIZES.NAV_ARROW_HORIZONTAL,
-    top: HISTORY_BOX.HEIGHT_HARD + HISTORY_BOX.MARGIN_BOTTOM + SPACING.MARGIN_SMALL, // Position below history box (using HEIGHT_HARD for worst case)
+    top: SPACING.MARGIN_MEDIUM, // Small vertical offset to clear history box
     alignItems: 'center',
     justifyContent: 'center',
   },
   libraryButtonContainer: {
     position: 'absolute',
     right: BUTTON_SIZES.NAV_ARROW_HORIZONTAL,
-    top: HISTORY_BOX.HEIGHT_HARD + HISTORY_BOX.MARGIN_BOTTOM + SPACING.MARGIN_SMALL, // Position below history box (using HEIGHT_HARD for worst case)
+    top: SPACING.MARGIN_MEDIUM, // Small vertical offset to clear history box
     alignItems: 'center',
     justifyContent: 'center',
   },

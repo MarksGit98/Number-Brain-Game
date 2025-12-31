@@ -178,13 +178,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: SPACING.CONTAINER_PADDING_HORIZONTAL,
     paddingBottom: SPACING.MARGIN_MEDIUM,
+    justifyContent: 'space-between',
   },
   puzzleCard: {
-    width: '30%',
+    width: '31%', // Adjusted to fit exactly 3 per row with margins
     aspectRatio: 1,
     backgroundColor: '#fff',
     borderRadius: 12,
-    margin: '1.5%',
+    marginBottom: SPACING.MARGIN_SMALL, // Only bottom margin for spacing between rows
     padding: 8,
     alignItems: 'center',
     justifyContent: 'center',
