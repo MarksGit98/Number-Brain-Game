@@ -21,7 +21,7 @@ export const FONT_SIZES = {
   LEVEL_NUMBER: SCREEN_HEIGHT * 0.025, // ~20px on base
   BUTTON_TEXT: SCREEN_HEIGHT * 0.022, // ~18px on base
   OPERATION_SYMBOL: SCREEN_HEIGHT * 0.049, // ~40px on base
-  DIGIT_TEXT: SCREEN_HEIGHT * 0.043, // ~35px on base (increased 15% from 30px)
+  DIGIT_TEXT: SCREEN_HEIGHT * 0.048, // ~39px on base (increased 12% from ~35px)
   SUCCESS_BANNER: SCREEN_HEIGHT * 0.059, // ~48px on base
 };
 
@@ -32,6 +32,9 @@ export const SPACING = {
   MARGIN_MEDIUM: SCREEN_HEIGHT * 0.025, // ~20px
   MARGIN_LARGE: SCREEN_HEIGHT * 0.037, // ~30px
   MARGIN_XLARGE: SCREEN_HEIGHT * 0.062, // ~50px
+  // Level library tile spacing - calculated to fit exactly 3 tiles per row
+  // Each tile has margin on all sides, so we need 6 margins total (2 per button) for 3 buttons
+  LEVEL_TILE_MARGIN: SCREEN_WIDTH * 0.054, // ~20px on base, calculated to fit 3 tiles per row
   
   // Padding
   PADDING_SMALL: SCREEN_HEIGHT * 0.012, // ~10px
@@ -91,6 +94,22 @@ export const HISTORY_BOX = {
   HEIGHT_EASY: SCREEN_HEIGHT * 0.197, // ~160px
   HEIGHT_MEDIUM: SCREEN_HEIGHT * 0.241, // ~196px
   HEIGHT_HARD: SCREEN_HEIGHT * 0.286, // ~232px
+  // Height calculation for dynamic history box (one line = title + one bar)
+  // One line = padding top + title + title margin + bar (padding + text + padding) + padding bottom
+  HEIGHT_ONE_LINE: (SCREEN_HEIGHT * 0.017) + // Padding top
+                   SCREEN_HEIGHT * 0.020 + // Title font size (approximate line height)
+                   SCREEN_HEIGHT * 0.010 + // Title margin bottom
+                   (SCREEN_HEIGHT * 0.010 * 2) + // Bar padding vertical (top + bottom)
+                   SCREEN_HEIGHT * 0.017 + // History text font size (approximate line height)
+                   (SCREEN_HEIGHT * 0.017), // Padding bottom
+  // Height for title only (no bars)
+  HEIGHT_TITLE_ONLY: (SCREEN_HEIGHT * 0.017) + // Padding top
+                     SCREEN_HEIGHT * 0.020 + // Title font size (approximate line height)
+                     (SCREEN_HEIGHT * 0.017), // Padding bottom
+  // Height per additional bar = bar padding + text + margin bottom
+  BAR_HEIGHT: (SCREEN_HEIGHT * 0.010 * 2) + // Bar padding vertical (top + bottom)
+              SCREEN_HEIGHT * 0.017 + // History text font size (approximate line height)
+              SCREEN_HEIGHT * 0.007, // Bar margin bottom
   BAR_PADDING_HORIZONTAL: SCREEN_WIDTH * 0.032, // ~12px
   BAR_PADDING_VERTICAL: SCREEN_HEIGHT * 0.010, // ~8px
   BAR_MARGIN_BOTTOM: SCREEN_HEIGHT * 0.007, // ~6px
@@ -170,13 +189,21 @@ export const ANIMATION = {
   SCALE_PRESSED_TAB: 0.98, // Very light press scale (for tabs)
   SCALE_NORMAL: 1, // Normal scale (unpressed)
   
-  // TranslateY values for button press animations
-  TRANSLATE_Y_PRESSED: 3, // Pixels to move down when pressed
+  // TranslateX values for button press animations (moving toward shadow position - right)
+  TRANSLATE_X_PRESSED: 4, // Pixels to move right when pressed (matches shadow offset)
+  TRANSLATE_X_PRESSED_LIGHT: 2, // Lighter press movement
+  TRANSLATE_X_PRESSED_TAB: 1, // Very light press movement
+  TRANSLATE_X_PRESSED_PLAY: 4, // Play button press movement
+  TRANSLATE_X_NORMAL: 0, // Normal position (unpressed)
+  TRANSLATE_X_SELECTED: 4, // Position when button is selected (matches shadow offset)
+  
+  // TranslateY values for button press animations (moving toward shadow position - down)
+  TRANSLATE_Y_PRESSED: 4, // Pixels to move down when pressed (matches shadow offset)
   TRANSLATE_Y_PRESSED_LIGHT: 2, // Lighter press movement
   TRANSLATE_Y_PRESSED_TAB: 1, // Very light press movement
   TRANSLATE_Y_PRESSED_PLAY: 4, // Play button press movement
   TRANSLATE_Y_NORMAL: 0, // Normal position (unpressed)
-  TRANSLATE_Y_SELECTED: 2, // Position when button is selected
+  TRANSLATE_Y_SELECTED: 4, // Position when button is selected (matches shadow offset)
   
   // Animation timing
   DURATION_FAST: 100, // Milliseconds for fast animations
@@ -204,6 +231,7 @@ export const COLORS = {
   BACKGROUND_WHITE: '#fff', // White background
   BACKGROUND_DARK: '#2C2C2C', // Dark gray (calculator display)
   BACKGROUND_DISABLED: '#E0E0E0', // Light gray for disabled buttons
+  BACKGROUND_DISABLED_DARK: '#B0B0B0', // Darker gray for disabled undo button
   
   // Button colors
   BUTTON_BLUE: '#2196F3', // Primary blue button
@@ -215,6 +243,7 @@ export const COLORS = {
   // Digit button colors
   DIGIT_FIRST_SELECTED: '#2196F3', // Blue for first selected digit
   DIGIT_SECOND_SELECTED: '#F44336', // Red for second selected digit
+  DIGIT_ERROR: '#D32F2F', // Darker red for error state
   
   // Difficulty colors
   DIFFICULTY_EASY: '#4CAF50', // Green for easy
@@ -249,8 +278,11 @@ export const COLORS = {
   OVERLAY_GREEN: 'rgba(76, 175, 80, 0.3)', // Green overlay
   OVERLAY_ORANGE: 'rgba(255, 152, 0, 0.3)', // Orange overlay
   OVERLAY_RED: 'rgba(244, 67, 54, 0.3)', // Red overlay
-  OVERLAY_BLUE_OPERATION_SELECTED: 'rgba(25, 118, 210, 0.15)', // Blue overlay for selected operation
-  OVERLAY_BLUE_OPERATION_PRESSED: 'rgba(13, 71, 161, 0.35)', // Blue overlay for pressed operation
+  // Operation button colors (orange - darker hue, less red)
+  BUTTON_ORANGE: '#F57C00', // Darker orange for operation buttons (less red, more orange)
+  BUTTON_ORANGE_DARK: '#E65100', // Darker orange (selected state)
+  OVERLAY_ORANGE_OPERATION_SELECTED: 'rgba(245, 124, 0, 0.15)', // Orange overlay for selected operation
+  OVERLAY_ORANGE_OPERATION_PRESSED: 'rgba(230, 81, 0, 0.35)', // Darker orange overlay for pressed operation
 };
 
 // Shadow offsets (specific pixel values)
@@ -258,6 +290,8 @@ export const SHADOW_OFFSETS = {
   // Standard shadow offsets
   STANDARD: { width: SCREEN_WIDTH * 0.011, height: SCREEN_HEIGHT * 0.005 }, // ~4px, ~4px
   STANDARD_ALT: { width: 4, height: 4 }, // 4px, 4px (for digit/operation buttons)
+  CIRCULAR: { width: 3.0, height: 3.0 }, // ~3.0px, ~3.0px (decreased shadow offset for circular buttons)
+  DIFFICULTY: { width: 4.4, height: 4.4 }, // ~4.4px, ~4.4px (10% larger for difficulty buttons - more depth)
   ZERO: { width: 0, height: 0 }, // No offset (for inset shadows)
   VERTICAL_SMALL: { width: 0, height: 2 }, // Small vertical shadow
   VERTICAL_MEDIUM: { width: 0, height: 4 }, // Medium vertical shadow

@@ -4,14 +4,16 @@ import { StatusBar } from 'expo-status-bar';
 import { Difficulty } from '../types';
 import PlayButton from '../Components/PlayButton';
 import DifficultyButton from '../Components/DifficultyButton';
-import PressableButton3D from '../Components/PressableButton3D';
-import { FONT_SIZES, SPACING } from '../constants/sizing';
+import SettingsButton from '../Components/SettingsButton';
+import LibraryButton from '../Components/LibraryButton';
+import { FONT_SIZES, SPACING, BUTTON_SIZES } from '../constants/sizing';
 
 interface MainMenuScreenProps {
   selectedDifficulty: Difficulty;
   onDifficultyChange: (difficulty: Difficulty) => void;
   onStartGame: () => void;
   onOpenLevelLibrary: () => void;
+  onOpenSettings: () => void;
 }
 
 export default function MainMenuScreen({
@@ -19,10 +21,17 @@ export default function MainMenuScreen({
   onDifficultyChange,
   onStartGame,
   onOpenLevelLibrary,
+  onOpenSettings,
 }: MainMenuScreenProps) {
   return (
     <View style={styles.menuContainer}>
       <StatusBar style="auto" />
+      <View style={styles.libraryButtonContainer}>
+        <LibraryButton onPress={onOpenLevelLibrary} />
+      </View>
+      <View style={styles.settingsButtonContainer}>
+        <SettingsButton onPress={onOpenSettings} />
+      </View>
       <Text style={styles.title}>Number Brain</Text>
       
       <View style={styles.menuContent}>
@@ -50,15 +59,6 @@ export default function MainMenuScreen({
             isSelected={selectedDifficulty === 'hard'}
           />
         </View>
-        
-        <PressableButton3D
-          variant="neutral"
-          size="medium"
-          onPress={onOpenLevelLibrary}
-          style={{ marginTop: SPACING.MARGIN_MEDIUM }}
-        >
-          Level Library
-        </PressableButton3D>
       </View>
     </View>
   );
@@ -72,6 +72,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: SPACING.CONTAINER_PADDING_HORIZONTAL,
     paddingTop: SPACING.CONTAINER_PADDING_TOP,
+  },
+  libraryButtonContainer: {
+    position: 'absolute',
+    top: SPACING.CONTAINER_PADDING_TOP,
+    left: SPACING.CONTAINER_PADDING_HORIZONTAL,
+    width: BUTTON_SIZES.NAV_ARROW_SIZE,
+    height: BUTTON_SIZES.NAV_ARROW_SIZE,
+    zIndex: 10,
+  },
+  settingsButtonContainer: {
+    position: 'absolute',
+    top: SPACING.CONTAINER_PADDING_TOP,
+    right: SPACING.CONTAINER_PADDING_HORIZONTAL,
+    width: BUTTON_SIZES.NAV_ARROW_SIZE,
+    height: BUTTON_SIZES.NAV_ARROW_SIZE,
+    zIndex: 10,
   },
   menuContent: {
     width: '100%',

@@ -5,13 +5,15 @@ import { GameState, Operation, Difficulty } from '../types';
 import { getPuzzlesByDifficulty, performOperation } from '../utils';
 import DigitButton from '../Components/DigitButton';
 import OperationButton from '../Components/OperationButton';
-import NavArrowButton from '../Components/NavArrowButton';
 import UndoButton from '../Components/UndoButton';
 import HomeButton from '../Components/HomeButton';
 import LibraryButton from '../Components/LibraryButton';
+import SettingsButton from '../Components/SettingsButton';
 import PressableButton3D from '../Components/PressableButton3D';
-import { SCREEN_DIMENSIONS, FONT_SIZES, SPACING, CALCULATOR_DISPLAY, HISTORY_BOX, LEVEL_POSITION, CONTROLS, BORDER_RADIUS, SHADOW, LETTER_SPACING, BUTTON_SIZES, DIGIT_CONTAINER_POSITION, COLORS, FONT_WEIGHTS, SHADOW_OFFSETS, ELEVATION, ANIMATION, NUMERIC_CONSTANTS } from '../constants/sizing';
+import { SCREEN_DIMENSIONS, FONT_SIZES, SPACING, CALCULATOR_DISPLAY, HISTORY_BOX, LEVEL_POSITION, CONTROLS, BORDER_RADIUS, SHADOW, LETTER_SPACING, BUTTON_SIZES, DIGIT_CONTAINER_POSITION, COLORS, FONT_WEIGHTS, SHADOW_OFFSETS, ELEVATION, ANIMATION, NUMERIC_CONSTANTS, BUTTON_BORDER } from '../constants/sizing';
+import { TEXT_SHADOW_BOLD_STRONG, TEXT_SHADOW_BOLD_MEDIUM, TEXT_SHADOW_BOLD_EXTRA } from '../constants/fonts';
 
+const SCREEN_WIDTH = SCREEN_DIMENSIONS.WIDTH;
 const SCREEN_HEIGHT = SCREEN_DIMENSIONS.HEIGHT;
 
 interface GameScreenProps {
@@ -22,13 +24,16 @@ interface GameScreenProps {
   successMessage: string;
   isAnimating: boolean;
   animatingDigit: number | null;
+  isShaking: boolean;
+  shakingDigitIndices: number[];
+  errorDigitIndex: number | null;
+  shakeTranslateX: Animated.Value;
   onDigitPress: (index: number) => void;
   onOperationPress: (operation: Operation) => void;
   onUndo: () => void;
   onReturnToMenu: () => void;
   onOpenLevelLibrary: () => void;
-  onGoToNextLevel: () => void;
-  onGoToPreviousLevel: () => void;
+  onOpenSettings: () => void;
   onSuccessBannerDismiss: () => void;
   targetContainerRef: React.RefObject<View | null>;
   digitContainerRef: React.RefObject<View | null>;
@@ -46,13 +51,16 @@ export default function GameScreen({
   successMessage,
   isAnimating,
   animatingDigit,
+  isShaking,
+  shakingDigitIndices,
+  errorDigitIndex,
+  shakeTranslateX,
   onDigitPress,
   onOperationPress,
   onUndo,
   onReturnToMenu,
   onOpenLevelLibrary,
-  onGoToNextLevel,
-  onGoToPreviousLevel,
+  onOpenSettings,
   onSuccessBannerDismiss,
   targetContainerRef,
   digitContainerRef,
@@ -83,6 +91,12 @@ export default function GameScreen({
       <View style={styles.homeButtonContainer}>
         <HomeButton
           onPress={onReturnToMenu}
+        />
+      </View>
+      
+      <View style={styles.settingsButtonContainer}>
+        <SettingsButton
+          onPress={onOpenSettings}
         />
       </View>
       
@@ -130,24 +144,43 @@ export default function GameScreen({
                 gameState.secondSelectedIndex === index;
               
               const isAnimatingThis = isAnimating && animatingDigit === digit && gameState.digits.length === 1;
+              const isShakingThis = (isShaking && gameState.digits.length === 1) || shakingDigitIndices.includes(index);
+              const isErrorThis = errorDigitIndex === index;
               
-              return (
+              const digitButton = (
                 <DigitButton
                   key={index}
                   ref={isAnimatingThis ? animatingDigitButtonRef : undefined}
                   digit={digit}
                   onPress={() => onDigitPress(index)}
-                  disabled={isAnimating}
+                  disabled={isAnimating || isShaking || shakingDigitIndices.length > 0}
                   isFirstSelected={isFirstSelected}
                   isSecondSelected={isSecondSelected}
+                  isError={isErrorThis}
                   isAnimating={isAnimatingThis}
                 />
               );
+              
+              // Wrap in Animated.View to apply shake animation when shaking
+              if (isShakingThis) {
+                return (
+                  <Animated.View
+                    key={index}
+                    style={{
+                      transform: [{ translateX: shakeTranslateX }],
+                    }}
+                  >
+                    {digitButton}
+                  </Animated.View>
+                );
+              }
+              
+              return digitButton;
             })}
           </View>
         </View>
       
-        {/* Animated tile that moves to target */}
+        {/* Animated tile that floats up and fades out */}
         {isAnimating && animatingDigit !== null && (
           <Animated.View
             style={[
@@ -156,7 +189,6 @@ export default function GameScreen({
                 transform: [
                   { translateX: animatedPosition.x },
                   { translateY: animatedPosition.y },
-                  { scale: animatedScale },
                 ],
                 opacity: animatedOpacity,
               },
@@ -183,64 +215,58 @@ export default function GameScreen({
           </View>
         </View>
 
+        {/* Undo Button - positioned between operations and history */}
+        <View style={styles.undoButtonWrapper}>
+          <UndoButton
+            onPress={onUndo}
+            disabled={gameState.history.length === 0}
+          />
+        </View>
+
         {/* History Container */}
         <View style={styles.historyContainerWrapper}>
           <View style={[
             styles.historyContainer,
-            difficulty === 'easy' && styles.historyContainerEasy,
-            difficulty === 'medium' && styles.historyContainerMedium,
-            difficulty === 'hard' && styles.historyContainerHard,
-          ]}>
-            <Text style={styles.historyTitle}>History</Text>
+            {
+              minHeight: HISTORY_BOX.HEIGHT_ONE_LINE,
+              // Height calculation (HEIGHT_ONE_LINE includes title space, but title is removed)
+              // For 0 or 1 entries: use HEIGHT_ONE_LINE
+              // For 2+ entries: HEIGHT_ONE_LINE + (additional entries beyond first * bar height)
+              // Cap height at maximum turns for difficulty: Easy=3, Medium=4, Hard=5
+              // Maximum history entries = initial tile count - 1
+              height: (() => {
+                const maxEntries = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
+                const cappedHistoryLength = Math.min(gameState.history.length, maxEntries);
+                return cappedHistoryLength <= 1
+                  ? HISTORY_BOX.HEIGHT_ONE_LINE
+                  : HISTORY_BOX.HEIGHT_ONE_LINE + ((cappedHistoryLength - 1) * HISTORY_BOX.BAR_HEIGHT);
+              })(),
+              borderWidth: BUTTON_BORDER.WIDTH,
+              borderColor: gameState.history.length > 0 ? '#000000' : '#B0B0B0',
+            },
+            ]}>
           {gameState.history.length > 0 ? (
-            gameState.history.slice(
-              -(difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5)
-            ).map((entry, index) => (
-              <View key={index} style={styles.historyBar}>
+            gameState.history.map((entry, index) => (
+              <View key={index} style={[
+                styles.historyBar,
+                // Remove margin bottom on last bar to prevent extra space
+                index === gameState.history.length - 1 && styles.historyBarLast,
+              ]}>
+                <Text style={styles.historyNumber}>{index + 1})</Text>
                 <Text style={styles.historyText}>
                   {entry.operands[0]} {entry.operation} {entry.operands[1]} = {entry.result}
                 </Text>
               </View>
             ))
-          ) : (
-            <View style={styles.historyPlaceholder} />
-          )}
+          ) : null}
           </View>
         </View>
 
-        {/* Controls Container */}
-        <View style={styles.controlsContainerWrapper}>
-          <View style={styles.controlsContainer}>
-            <View style={styles.undoButtonContainer}>
-              <UndoButton
-                onPress={onUndo}
-                disabled={gameState.history.length === 0}
-              />
-            </View>
-            <View style={styles.libraryButtonContainer}>
-              <LibraryButton
-                onPress={onOpenLevelLibrary}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Navigation arrows at bottom corners */}
-        <View style={styles.bottomNavContainer}>
-          <View style={styles.bottomNavLeft}>
-            <NavArrowButton
-              direction="left"
-              onPress={onGoToPreviousLevel}
-              disabled={currentPuzzleIndex === null || currentPuzzleIndex === 0}
-            />
-          </View>
-          <View style={styles.bottomNavRight}>
-            <NavArrowButton
-              direction="right"
-              onPress={onGoToNextLevel}
-              disabled={currentPuzzleIndex === null || currentPuzzleIndex >= puzzles.length - 1}
-            />
-          </View>
+        {/* Library button at bottom right */}
+        <View style={styles.libraryButtonContainer}>
+          <LibraryButton
+            onPress={onOpenLevelLibrary}
+          />
         </View>
       </View>
     </View>
@@ -297,17 +323,11 @@ const styles = StyleSheet.create({
     borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS,
     width: CALCULATOR_DISPLAY.WIDTH,
     height: CALCULATOR_DISPLAY.HEIGHT,
-    shadowColor: COLORS.SHADOW_BLACK,
-    shadowOffset: SHADOW.OFFSET_MEDIUM,
-    shadowOpacity: SHADOW.OPACITY_FULL,
-    shadowRadius: ELEVATION.NONE,
-    elevation: ELEVATION.NONE,
-    display: 'flex',
-    flexDirection: 'row',
+    borderWidth: BUTTON_BORDER.WIDTH * 2, // Thin-moderate border (2x the standard thin border)
+    borderColor: BUTTON_BORDER.COLOR,
   },
   targetNumber: {
     fontSize: FONT_SIZES.TARGET_NUMBER,
-    fontWeight: '900' as const, // Bolder
     color: COLORS.TEXT_SUCCESS,
     fontFamily: 'Digital-7-Mono',
     letterSpacing: LETTER_SPACING.WIDE,
@@ -315,6 +335,10 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     includeFontPadding: false,
     lineHeight: FONT_SIZES.TARGET_NUMBER,
+    // Enhanced shadow for 3D pop effect
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 3,
   },
   digitsContainerWrapper: {
     width: '100%' as const,
@@ -360,7 +384,7 @@ const styles = StyleSheet.create({
   operationsContainerWrapper: {
     width: '100%' as const,
     alignItems: 'center',
-    marginBottom: SPACING.MARGIN_SMALL,
+    marginBottom: 0, // Removed margin, spacing handled by undo button wrapper
   },
   operationsContainer: {
     flexDirection: 'row',
@@ -391,10 +415,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  undoButtonWrapper: {
+    width: '100%' as const,
+    alignItems: 'center',
+    marginTop: SPACING.MARGIN_SMALL,
+    marginBottom: SPACING.MARGIN_SMALL,
+  },
   historyContainerWrapper: {
     width: '100%' as const,
     alignItems: 'center',
     marginBottom: SPACING.MARGIN_SMALL,
+    // Reserve max height to prevent other elements from shifting
+    height: HISTORY_BOX.HEIGHT_HARD,
+    justifyContent: 'flex-start',
   },
   historyContainer: {
     backgroundColor: '#fff',
@@ -402,21 +435,13 @@ const styles = StyleSheet.create({
     borderRadius: HISTORY_BOX.BORDER_RADIUS,
     width: HISTORY_BOX.WIDTH,
     maxWidth: HISTORY_BOX.MAX_WIDTH,
-    height: HISTORY_BOX.HEIGHT_EASY,
     shadowColor: '#000',
     shadowOffset: SHADOW.OFFSET_SMALL,
     shadowOpacity: SHADOW.OPACITY_LIGHT,
     shadowRadius: SHADOW.RADIUS_MEDIUM,
     elevation: 2,
-  },
-  historyContainerEasy: {
-    height: HISTORY_BOX.HEIGHT_EASY,
-  },
-  historyContainerMedium: {
-    height: HISTORY_BOX.HEIGHT_MEDIUM,
-  },
-  historyContainerHard: {
-    height: HISTORY_BOX.HEIGHT_HARD,
+    overflow: 'hidden', // Ensure content doesn't overflow rounded corners
+    alignSelf: 'flex-start', // Prevent stretching to full wrapper height
   },
   historyTitle: {
     fontSize: FONT_SIZES.HISTORY_TITLE,
@@ -425,6 +450,8 @@ const styles = StyleSheet.create({
     marginBottom: HISTORY_BOX.TITLE_MARGIN_BOTTOM,
   },
   historyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.BACKGROUND_DARK,
     paddingHorizontal: HISTORY_BOX.BAR_PADDING_HORIZONTAL,
     paddingVertical: HISTORY_BOX.BAR_PADDING_VERTICAL,
@@ -436,41 +463,42 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 0,
   },
-  historyText: {
-    fontSize: FONT_SIZES.HISTORY_TEXT,
+  historyBarLast: {
+    marginBottom: 0, // Remove margin on last bar
+  },
+  historyNumber: {
+    fontSize: FONT_SIZES.HISTORY_TEXT * 1.06, // Marginally increased
     color: COLORS.TEXT_SUCCESS,
     fontFamily: 'Digital-7-Mono',
-    fontWeight: 'bold' as const,
+    ...TEXT_SHADOW_BOLD_EXTRA, // Extra bold for numbers (bolder than history text)
+    letterSpacing: LETTER_SPACING.TIGHT,
+    marginRight: SPACING.MARGIN_SMALL,
+  },
+  historyText: {
+    fontSize: FONT_SIZES.HISTORY_TEXT * 1.06, // Marginally increased
+    color: COLORS.TEXT_SUCCESS,
+    fontFamily: 'Digital-7-Mono',
+    ...TEXT_SHADOW_BOLD_MEDIUM, // Use text shadow for bold effect (fontWeight doesn't work with Digital-7 Mono)
     letterSpacing: LETTER_SPACING.TIGHT,
   },
   historyPlaceholder: {
     height: SPACING.MARGIN_MEDIUM,
   },
-  controlsContainerWrapper: {
-    width: '100%' as const,
-    alignItems: 'center',
-    marginBottom: SPACING.MARGIN_SMALL,
-  },
-  controlsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%' as const,
-    position: 'relative',
-  },
-  undoButtonContainer: {
+  settingsButtonContainer: {
     position: 'absolute',
-    left: BUTTON_SIZES.NAV_ARROW_HORIZONTAL,
-    top: SPACING.MARGIN_MEDIUM, // Small vertical offset to clear history box
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: SPACING.CONTAINER_PADDING_TOP,
+    right: SPACING.CONTAINER_PADDING_HORIZONTAL,
+    width: BUTTON_SIZES.NAV_ARROW_SIZE,
+    height: BUTTON_SIZES.NAV_ARROW_SIZE,
+    zIndex: 10,
   },
   libraryButtonContainer: {
     position: 'absolute',
+    bottom: BUTTON_SIZES.NAV_ARROW_BOTTOM,
     right: BUTTON_SIZES.NAV_ARROW_HORIZONTAL,
-    top: SPACING.MARGIN_MEDIUM, // Small vertical offset to clear history box
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: BUTTON_SIZES.NAV_ARROW_SIZE,
+    height: BUTTON_SIZES.NAV_ARROW_SIZE,
+    zIndex: 10,
   },
   undoButton: {
     backgroundColor: '#9E9E9E',

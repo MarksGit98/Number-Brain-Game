@@ -1,13 +1,14 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Difficulty, Puzzle } from '../types';
 import { getPuzzlesByDifficulty, getPuzzleByIndex, getPuzzleKey } from '../utils';
 import TabButton from '../Components/TabButton';
 import PuzzleCard from '../Components/PuzzleCard';
-import NavArrowButton from '../Components/NavArrowButton';
 import HomeButton from '../Components/HomeButton';
-import { FONT_SIZES, SPACING, BUTTON_SIZES } from '../constants/sizing';
+import SettingsButton from '../Components/SettingsButton';
+import { FONT_SIZES, SPACING, BUTTON_SIZES, COLORS, ANIMATION, SHADOW_OFFSETS, BORDER_RADIUS, BUTTON_BORDER, SCREEN_DIMENSIONS, CALCULATOR_DISPLAY, LETTER_SPACING } from '../constants/sizing';
+import { TEXT_SHADOW_BOLD_STRONG } from '../constants/fonts';
 
 interface LevelLibraryScreenProps {
   libraryTab: Difficulty;
@@ -16,7 +17,126 @@ interface LevelLibraryScreenProps {
   onReturnToMenu: () => void;
   onSelectPuzzle: (difficulty: Difficulty, puzzle: Puzzle, index: number) => void;
   completedPuzzles: Set<string>;
+  onOpenSettings: () => void;
 }
+
+// Difficulty Label Button Component
+interface DifficultyLabelButtonProps {
+  label: string;
+  color: string;
+  onPress: () => void;
+  isSelected: boolean;
+  style?: any;
+}
+
+const DifficultyLabelButton = ({ label, color, onPress, isSelected, style }: DifficultyLabelButtonProps) => {
+  const translateXAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(0)).current;
+  const shadowOpacityAnim = useRef(new Animated.Value(1)).current;
+
+  // Update animation values when selection changes
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(translateXAnim, {
+        toValue: isSelected ? ANIMATION.TRANSLATE_X_PRESSED : ANIMATION.TRANSLATE_X_NORMAL,
+        duration: ANIMATION.DURATION_FAST,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: isSelected ? ANIMATION.TRANSLATE_Y_PRESSED : ANIMATION.TRANSLATE_Y_NORMAL,
+        duration: ANIMATION.DURATION_FAST,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shadowOpacityAnim, {
+        toValue: isSelected ? ANIMATION.OPACITY_HIDDEN : ANIMATION.OPACITY_FULL,
+        duration: ANIMATION.DURATION_FAST,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [isSelected, translateXAnim, translateYAnim, shadowOpacityAnim]);
+
+  const handlePressIn = () => {
+    if (!isSelected) {
+      Animated.parallel([
+        Animated.timing(translateXAnim, {
+          toValue: ANIMATION.TRANSLATE_X_PRESSED,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: ANIMATION.TRANSLATE_Y_PRESSED,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacityAnim, {
+          toValue: ANIMATION.OPACITY_HIDDEN,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  };
+
+  const handlePressOut = () => {
+    if (!isSelected) {
+      Animated.parallel([
+        Animated.timing(translateXAnim, {
+          toValue: ANIMATION.TRANSLATE_X_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: ANIMATION.TRANSLATE_Y_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacityAnim, {
+          toValue: ANIMATION.OPACITY_FULL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  };
+
+  return (
+    <Animated.View
+      style={[
+        {
+          transform: [
+            { translateX: translateXAnim },
+            { translateY: translateYAnim },
+          ],
+        },
+        styles.difficultyLabelButtonWrapper,
+        style,
+      ]}
+    >
+      <Animated.View
+        style={[
+          styles.difficultyLabelButton,
+          {
+            backgroundColor: color,
+            shadowColor: COLORS.SHADOW_BLACK,
+            shadowOpacity: shadowOpacityAnim,
+            shadowOffset: SHADOW_OFFSETS.DIFFICULTY,
+            shadowRadius: 0,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={1}
+          style={styles.difficultyLabelButtonInner}
+        >
+          <Text style={styles.difficultyLabelButtonText}>{label}</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </Animated.View>
+  );
+};
 
 export default function LevelLibraryScreen({
   libraryTab,
@@ -25,6 +145,7 @@ export default function LevelLibraryScreen({
   onReturnToMenu,
   onSelectPuzzle,
   completedPuzzles,
+  onOpenSettings,
 }: LevelLibraryScreenProps) {
   const puzzles = getPuzzlesByDifficulty(libraryTab);
   const completedCount = puzzles.reduce((count, _, index) => {
@@ -39,14 +160,34 @@ export default function LevelLibraryScreen({
           onPress={onReturnToMenu}
         />
       </View>
+      <View style={styles.settingsButtonContainer}>
+        <SettingsButton onPress={onOpenSettings} />
+      </View>
       <View style={styles.libraryHeader}>
-        <Text style={styles.libraryTitle}>Level Library</Text>
-        <View style={styles.backButtonContainer}>
-          <NavArrowButton
-            direction="left"
-            onPress={onClose}
-          />
+        <View style={styles.libraryTitleContainer}>
+          <Text style={styles.libraryTitle}>LEVELS</Text>
         </View>
+      </View>
+
+      <View style={styles.difficultyLabelsContainer}>
+        <DifficultyLabelButton
+          label="Easy"
+          color={COLORS.DIFFICULTY_EASY}
+          onPress={() => onTabChange('easy')}
+          isSelected={libraryTab === 'easy'}
+        />
+        <DifficultyLabelButton
+          label="Medium"
+          color={COLORS.DIFFICULTY_MEDIUM}
+          onPress={() => onTabChange('medium')}
+          isSelected={libraryTab === 'medium'}
+        />
+        <DifficultyLabelButton
+          label="Hard"
+          color={COLORS.DIFFICULTY_HARD}
+          onPress={() => onTabChange('hard')}
+          isSelected={libraryTab === 'hard'}
+        />
       </View>
 
       <View style={styles.tabContainer}>
@@ -74,7 +215,11 @@ export default function LevelLibraryScreen({
         {completedCount} / {puzzles.length} Completed
       </Text>
 
-      <View style={styles.puzzleGrid}>
+      <ScrollView 
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.puzzleGrid}
+        showsVerticalScrollIndicator={true}
+      >
         {puzzles.map((puzzle, index) => {
           const puzzleKey = getPuzzleKey(libraryTab, index);
           const isCompleted = completedPuzzles.has(puzzleKey);
@@ -88,7 +233,7 @@ export default function LevelLibraryScreen({
             />
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -103,31 +248,35 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.CONTAINER_PADDING_TOP,
   },
   libraryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.CONTAINER_PADDING_HORIZONTAL,
-    paddingTop: SPACING.CONTAINER_PADDING_TOP,
-    paddingBottom: SPACING.MARGIN_MEDIUM,
     width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.CONTAINER_PADDING_HORIZONTAL,
+    paddingTop: SPACING.CONTAINER_PADDING_TOP * 0.5,
+    paddingBottom: SPACING.MARGIN_MEDIUM,
+  },
+  libraryTitleContainer: {
+    width: CALCULATOR_DISPLAY.WIDTH * 0.7, // Scaled down to 70% of PlayButton width
+    height: CALCULATOR_DISPLAY.HEIGHT * 0.5, // Scaled down to 50% of PlayButton height
+    borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS,
+    backgroundColor: COLORS.BACKGROUND_DARK,
+    paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL * 0.7,
+    paddingVertical: CALCULATOR_DISPLAY.PADDING_VERTICAL * 0.5,
+    borderWidth: BUTTON_BORDER.WIDTH * 2,
+    borderColor: BUTTON_BORDER.COLOR,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
   },
   libraryTitle: {
-    fontSize: FONT_SIZES.TITLE * 0.93, // ~28px equivalent
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
-  backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  backButtonText: {
-    fontSize: 18,
-    color: '#2196F3',
-    fontWeight: '600',
-  },
-  backButtonContainer: {
-    width: BUTTON_SIZES.NAV_ARROW_SIZE,
-    height: BUTTON_SIZES.NAV_ARROW_SIZE,
+    fontSize: FONT_SIZES.TARGET_NUMBER * 0.35, // Scaled down to 35% of PlayButton font size
+    color: COLORS.TEXT_SUCCESS,
+    fontFamily: 'Digital-7-Mono',
+    letterSpacing: LETTER_SPACING.WIDE,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    lineHeight: FONT_SIZES.TARGET_NUMBER * 0.35,
+    ...TEXT_SHADOW_BOLD_STRONG,
   },
   homeButtonContainer: {
     position: 'absolute',
@@ -136,6 +285,46 @@ const styles = StyleSheet.create({
     width: BUTTON_SIZES.NAV_ARROW_SIZE,
     height: BUTTON_SIZES.NAV_ARROW_SIZE,
     zIndex: 10,
+  },
+  settingsButtonContainer: {
+    position: 'absolute',
+    top: SPACING.CONTAINER_PADDING_TOP,
+    right: SPACING.CONTAINER_PADDING_HORIZONTAL,
+    width: BUTTON_SIZES.NAV_ARROW_SIZE,
+    height: BUTTON_SIZES.NAV_ARROW_SIZE,
+    zIndex: 10,
+  },
+  difficultyLabelsContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    marginBottom: SPACING.MARGIN_SMALL,
+    paddingHorizontal: SPACING.CONTAINER_PADDING_HORIZONTAL,
+    justifyContent: 'space-between',
+  },
+  difficultyLabelButtonWrapper: {
+    flex: 0,
+    width: '32%',
+  },
+  difficultyLabelButton: {
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    borderWidth: BUTTON_BORDER.WIDTH,
+    borderColor: BUTTON_BORDER.COLOR,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  difficultyLabelButtonInner: {
+    paddingVertical: SPACING.PADDING_SMALL,
+    paddingHorizontal: SPACING.PADDING_SMALL,
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  difficultyLabelButtonText: {
+    fontSize: FONT_SIZES.DIFFICULTY_BUTTON * 0.9, // Slightly smaller to fit "Medium" on one line
+    fontWeight: 'bold' as const,
+    color: COLORS.TEXT_WHITE,
+    textAlign: 'center',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -172,13 +361,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: SPACING.MARGIN_MEDIUM,
   },
-  puzzleGrid: {
+  scrollContainer: {
     flex: 1,
+    width: '100%',
+    marginTop: -SCREEN_DIMENSIONS.HEIGHT * 0.02, // Shift up by 2% of screen height
+  },
+  puzzleGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: SPACING.CONTAINER_PADDING_HORIZONTAL,
     paddingBottom: SPACING.MARGIN_MEDIUM,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    width: '100%',
   },
   puzzleCard: {
     width: '31%', // Adjusted to fit exactly 3 per row with margins

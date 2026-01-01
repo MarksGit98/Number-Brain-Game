@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { TouchableOpacity, StyleSheet, Animated, Text, View, ViewStyle, TextStyle } from 'react-native';
-import { BUTTON_SIZES, FONT_SIZES, BORDER_RADIUS, SHADOW, INSET_SHADOW, SPACING } from '../constants/sizing';
+import { BUTTON_SIZES, FONT_SIZES, BORDER_RADIUS, SPACING, ANIMATION, SHADOW_OFFSETS, COLORS, BUTTON_BORDER } from '../constants/sizing';
+import { soundManager } from '../utils/soundManager';
 
 interface DifficultyButtonProps {
   difficulty: 'easy' | 'medium' | 'hard';
@@ -17,83 +18,9 @@ export default function DifficultyButton({
   style,
   textStyle,
 }: DifficultyButtonProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const translateXAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
   const shadowOpacityAnim = useRef(new Animated.Value(1)).current;
-  const insetShadowOpacityAnim = useRef(new Animated.Value(0)).current;
-  const pressOverlayAnim = useRef(new Animated.Value(0)).current;
-
-  const handlePressIn = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 0.92,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 10,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 3,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shadowOpacityAnim, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: false,
-      }),
-      Animated.timing(insetShadowOpacityAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: false,
-      }),
-      Animated.timing(pressOverlayAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-
-  const handlePressOut = () => {
-    if (isSelected) {
-      // Keep shadow states and color if selected, but reset scale
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 10,
-      }).start();
-      return;
-    }
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 10,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shadowOpacityAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: false,
-      }),
-      Animated.timing(insetShadowOpacityAnim, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: false,
-      }),
-      Animated.timing(pressOverlayAnim, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
 
   const getColors = () => {
     switch (difficulty) {
@@ -109,42 +36,42 @@ export default function DifficultyButton({
   const colors = getColors();
   const tileCount = difficulty === 'easy' ? '4 Tiles' : difficulty === 'medium' ? '5 Tiles' : '6 Tiles';
 
-  const getPressOverlayColor = () => {
-    switch (difficulty) {
-      case 'easy':
-        return 'rgba(76, 175, 80, 0.3)'; // Lighter green
-      case 'medium':
-        return 'rgba(255, 152, 0, 0.3)'; // Lighter orange
-      case 'hard':
-        return 'rgba(244, 67, 54, 0.3)'; // Lighter red
+  const handlePress = () => {
+    if (isSelected) {
+      soundManager.playSound('buttonRelease');
+    } else {
+      soundManager.playSound('buttonPress');
     }
+    onPress();
   };
 
-  // Update shadow opacity and scale when selection changes
+  // Animate between unselected and selected states
   useEffect(() => {
-    if (isSelected) {
-      shadowOpacityAnim.setValue(0);
-      insetShadowOpacityAnim.setValue(1);
-      pressOverlayAnim.setValue(1);
-      // Ensure scale is reset to 1 when selected
-      scaleAnim.setValue(1);
-      translateYAnim.setValue(2);
-    } else {
-      shadowOpacityAnim.setValue(1);
-      insetShadowOpacityAnim.setValue(0);
-      pressOverlayAnim.setValue(0);
-      // Ensure scale is reset to 1 when unselected
-      scaleAnim.setValue(1);
-      translateYAnim.setValue(0);
-    }
-  }, [isSelected, shadowOpacityAnim, insetShadowOpacityAnim, pressOverlayAnim, scaleAnim, translateYAnim]);
+    Animated.parallel([
+      Animated.timing(translateXAnim, {
+        toValue: isSelected ? ANIMATION.TRANSLATE_X_SELECTED : ANIMATION.TRANSLATE_X_NORMAL,
+        duration: ANIMATION.DURATION_FAST,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: isSelected ? ANIMATION.TRANSLATE_Y_SELECTED : ANIMATION.TRANSLATE_Y_NORMAL,
+        duration: ANIMATION.DURATION_FAST,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shadowOpacityAnim, {
+        toValue: isSelected ? ANIMATION.OPACITY_HIDDEN : ANIMATION.OPACITY_FULL,
+        duration: ANIMATION.DURATION_FAST,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [isSelected, translateXAnim, translateYAnim, shadowOpacityAnim]);
 
   return (
     <Animated.View
       style={[
         {
           transform: [
-            { scale: scaleAnim },
+            { translateX: translateXAnim },
             { translateY: translateYAnim },
           ],
         },
@@ -155,45 +82,20 @@ export default function DifficultyButton({
           styles.button,
           {
             backgroundColor: colors.bg,
-            shadowColor: '#000',
-            shadowOpacity: isSelected ? 0 : shadowOpacityAnim,
-            shadowOffset: { width: 4, height: 4 },
+            shadowColor: COLORS.SHADOW_BLACK,
+            shadowOpacity: shadowOpacityAnim,
+            shadowOffset: SHADOW_OFFSETS.DIFFICULTY,
+            shadowRadius: 0,
           },
           isSelected && styles.buttonSelected,
           style,
         ]}
       >
         <TouchableOpacity
-          onPress={onPress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
+          onPress={handlePress}
           activeOpacity={1}
           style={styles.buttonInner}
         >
-          {/* Dark overlay that appears when pressed */}
-          <Animated.View
-            style={[
-              styles.pressOverlay,
-              {
-                backgroundColor: getPressOverlayColor(),
-                opacity: isSelected ? 1 : pressOverlayAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 1],
-                }),
-              },
-            ]}
-            pointerEvents="none"
-          />
-          {/* Inset shadow layer for pressed state - positioned inside */}
-          <Animated.View
-            style={[
-              styles.insetShadow,
-              {
-                opacity: isSelected ? 1 : insetShadowOpacityAnim,
-              },
-            ]}
-            pointerEvents="none"
-          />
           <Text style={[styles.text, isSelected && styles.textSelected, textStyle]}>
             {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
           </Text>
@@ -211,11 +113,13 @@ const styles = StyleSheet.create({
     width: BUTTON_SIZES.DIFFICULTY_BUTTON_WIDTH,
     borderRadius: BORDER_RADIUS.LARGE,
     marginBottom: BUTTON_SIZES.DIFFICULTY_BUTTON_MARGIN_BOTTOM,
+    borderWidth: BUTTON_BORDER.WIDTH,
+    borderColor: BUTTON_BORDER.COLOR,
     shadowRadius: 0,
     elevation: 0,
   },
   buttonSelected: {
-    transform: [{ translateX: SHADOW.OFFSET_SMALL.width }, { translateY: SHADOW.OFFSET_SMALL.height }],
+    // Transform is now handled by animated translateX/translateY on outer Animated.View
   },
   buttonInner: {
     paddingVertical: BUTTON_SIZES.DIFFICULTY_BUTTON_PADDING_VERTICAL,
@@ -224,28 +128,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-  },
-  pressOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: BORDER_RADIUS.LARGE,
-  },
-  insetShadow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: BORDER_RADIUS.LARGE,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: SHADOW.OPACITY_FULL,
-    shadowRadius: INSET_SHADOW.RADIUS,
-    borderWidth: INSET_SHADOW.BORDER_WIDTH_THICK,
-    borderColor: 'rgba(0, 0, 0, 0.4)',
   },
   text: {
     fontSize: FONT_SIZES.DIFFICULTY_BUTTON,

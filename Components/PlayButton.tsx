@@ -1,6 +1,8 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity, StyleSheet, Animated, Text, ViewStyle, TextStyle } from 'react-native';
-import { BUTTON_SIZES, FONT_SIZES, CALCULATOR_DISPLAY, SHADOW, LETTER_SPACING, SPACING } from '../constants/sizing';
+import { FONT_SIZES, CALCULATOR_DISPLAY, LETTER_SPACING, SPACING, COLORS, ANIMATION, BUTTON_BORDER } from '../constants/sizing';
+import { TEXT_SHADOW_BOLD_STRONG } from '../constants/fonts';
+import { soundManager } from '../utils/soundManager';
 
 interface PlayButtonProps {
   onPress: () => void;
@@ -16,60 +18,44 @@ export default function PlayButton({
   textStyle,
 }: PlayButtonProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const translateYAnim = useRef(new Animated.Value(0)).current;
 
   const handlePressIn = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 0.95,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 10,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 4,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(scaleAnim, {
+      toValue: ANIMATION.SCALE_PRESSED_LIGHT, // Slightly shrink when pressed
+      duration: ANIMATION.DURATION_FAST,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handlePressOut = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 10,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(scaleAnim, {
+      toValue: ANIMATION.SCALE_NORMAL, // Return to normal size
+      duration: ANIMATION.DURATION_FAST,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePress = () => {
+    soundManager.playSound('buttonPress');
+    onPress();
   };
 
   return (
     <Animated.View
       style={[
+        styles.button,
         {
-          transform: [
-            { scale: scaleAnim },
-            { translateY: translateYAnim },
-          ],
+          transform: [{ scale: scaleAnim }],
         },
+        style,
       ]}
     >
       <TouchableOpacity
-        onPress={onPress}
+        onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         activeOpacity={1}
-        style={[
-          styles.button,
-          style,
-        ]}
+        style={styles.buttonInner}
       >
         <Text style={[styles.text, textStyle]}>PLAY</Text>
       </TouchableOpacity>
@@ -79,27 +65,33 @@ export default function PlayButton({
 
 const styles = StyleSheet.create({
   button: {
-    width: BUTTON_SIZES.PLAY_BUTTON_WIDTH,
-    height: BUTTON_SIZES.PLAY_BUTTON_HEIGHT,
+    width: CALCULATOR_DISPLAY.WIDTH,
+    height: CALCULATOR_DISPLAY.HEIGHT,
     borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: SPACING.MARGIN_XLARGE,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: COLORS.BACKGROUND_DARK,
     paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL,
     paddingVertical: CALCULATOR_DISPLAY.PADDING_VERTICAL,
-    shadowColor: '#000',
-    shadowOffset: SHADOW.OFFSET_MEDIUM,
-    shadowOpacity: SHADOW.OPACITY_FULL,
-    shadowRadius: 0,
-    elevation: 0,
+    borderWidth: BUTTON_BORDER.WIDTH * 2, // Thin-moderate border (2x the standard thin border)
+    borderColor: BUTTON_BORDER.COLOR,
+  },
+  buttonInner: {
+    width: '100%' as const,
+    height: '100%' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   text: {
-    fontSize: FONT_SIZES.PLAY_BUTTON,
-    fontWeight: '900',
-    color: '#4CAF50',
+    fontSize: FONT_SIZES.TARGET_NUMBER,
+    color: COLORS.TEXT_SUCCESS,
     fontFamily: 'Digital-7-Mono',
-    letterSpacing: LETTER_SPACING.EXTRA_WIDE,
+    letterSpacing: LETTER_SPACING.WIDE,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    lineHeight: FONT_SIZES.TARGET_NUMBER,
+    ...TEXT_SHADOW_BOLD_STRONG, // Use text shadow for bold effect (fontWeight doesn't work with Digital-7 Mono)
   },
 });
 

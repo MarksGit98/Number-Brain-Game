@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
-import { TouchableOpacity, StyleSheet, Animated, Text, View, ViewStyle } from 'react-native';
-import { BORDER_RADIUS, SHADOW, FONT_SIZES, SPACING, SCREEN_DIMENSIONS, PERCENTAGES } from '../constants/sizing';
+import { TouchableOpacity, StyleSheet, Animated, Text, ViewStyle } from 'react-native';
+import { BUTTON_SIZES, FONT_SIZES, BORDER_RADIUS, BUTTON_BORDER, ANIMATION, COLORS, SHADOW_OFFSETS, SPACING } from '../constants/sizing';
+import { TEXT_SHADOW_BOLD_STRONG } from '../constants/fonts';
 
 interface PuzzleCardProps {
   levelNumber: number;
@@ -15,39 +16,52 @@ export default function PuzzleCard({
   isCompleted,
   style,
 }: PuzzleCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const translateXAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
+  const shadowOpacityAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
     Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 0.95,
+      Animated.timing(translateXAnim, {
+        toValue: ANIMATION.TRANSLATE_X_PRESSED,
+        duration: ANIMATION.DURATION_FAST,
         useNativeDriver: true,
-        tension: 300,
-        friction: 10,
       }),
       Animated.timing(translateYAnim, {
-        toValue: 2,
-        duration: 100,
+        toValue: ANIMATION.TRANSLATE_Y_PRESSED,
+        duration: ANIMATION.DURATION_FAST,
         useNativeDriver: true,
+      }),
+      Animated.timing(shadowOpacityAnim, {
+        toValue: ANIMATION.OPACITY_HIDDEN,
+        duration: ANIMATION.DURATION_FAST,
+        useNativeDriver: false,
       }),
     ]).start();
   };
 
   const handlePressOut = () => {
     Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
+      Animated.timing(translateXAnim, {
+        toValue: ANIMATION.TRANSLATE_X_NORMAL,
+        duration: ANIMATION.DURATION_FAST,
         useNativeDriver: true,
-        tension: 300,
-        friction: 10,
       }),
       Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 100,
+        toValue: ANIMATION.TRANSLATE_Y_NORMAL,
+        duration: ANIMATION.DURATION_FAST,
         useNativeDriver: true,
       }),
+      Animated.timing(shadowOpacityAnim, {
+        toValue: ANIMATION.OPACITY_FULL,
+        duration: ANIMATION.DURATION_FAST,
+        useNativeDriver: false,
+      }),
     ]).start();
+  };
+
+  const getBackgroundColor = () => {
+    return isCompleted ? COLORS.DIFFICULTY_EASY : COLORS.DIFFICULTY_HARD; // Green for completed, Red for incomplete
   };
 
   return (
@@ -55,54 +69,64 @@ export default function PuzzleCard({
       style={[
         {
           transform: [
-            { scale: scaleAnim },
+            { translateX: translateXAnim },
             { translateY: translateYAnim },
           ],
         },
+        style,
       ]}
     >
-      <TouchableOpacity
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={1}
+      <Animated.View
         style={[
-          styles.card,
-          isCompleted ? styles.cardCompleted : styles.cardIncomplete,
-          style,
+          styles.button,
+          {
+            backgroundColor: getBackgroundColor(),
+            shadowColor: COLORS.SHADOW_BLACK,
+            shadowOpacity: shadowOpacityAnim,
+            shadowOffset: SHADOW_OFFSETS.STANDARD_ALT,
+          },
         ]}
       >
-        <Text style={styles.levelText}>{levelNumber}</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={1}
+          style={styles.buttonInner}
+        >
+          <Text style={styles.text}>
+            {levelNumber}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    width: '31%' as const, // Exactly 3 cards per row (31% × 3 = 93%, leaving 7% for margins and spacing)
-    aspectRatio: 1, // Maintain square shape
+  button: {
+    width: BUTTON_SIZES.DIGIT_BUTTON_SIZE,
+    height: BUTTON_SIZES.DIGIT_BUTTON_SIZE,
     borderRadius: BORDER_RADIUS.XLARGE,
-    marginBottom: SPACING.MARGIN_SMALL, // Only bottom margin for row spacing
-    padding: SPACING.PADDING_SMALL,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: SHADOW.OFFSET_MEDIUM,
-    shadowOpacity: SHADOW.OPACITY_FULL,
+    margin: SPACING.LEVEL_TILE_MARGIN, // Gap between tiles (calculated to fit exactly 3 per row)
+    borderWidth: BUTTON_BORDER.WIDTH,
+    borderColor: BUTTON_BORDER.COLOR,
     shadowRadius: 0,
     elevation: 0,
   },
-  cardCompleted: {
-    backgroundColor: '#4CAF50',
+  buttonInner: {
+    width: '100%' as const,
+    height: '100%' as const,
+    borderRadius: BORDER_RADIUS.XLARGE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  cardIncomplete: {
-    backgroundColor: '#F44336',
-  },
-  levelText: {
-    fontSize: FONT_SIZES.BUTTON_TEXT,
-    fontWeight: 'bold',
-    color: '#fff',
+  text: {
+    fontSize: FONT_SIZES.DIGIT_TEXT * 1.2, // Increase font size by 20%
+    fontFamily: 'Digital-7-Mono',
+    color: COLORS.TEXT_WHITE,
+    ...TEXT_SHADOW_BOLD_STRONG, // Use stronger text shadow for bolder effect
   },
 });
 

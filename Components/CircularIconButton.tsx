@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity, StyleSheet, Animated, ViewStyle } from 'react-native';
-import { BUTTON_SIZES, SHADOW, ANIMATION, COLORS, NUMERIC_CONSTANTS, ELEVATION, SHADOW_OFFSETS, INSET_SHADOW, BUTTON_BORDER, BORDER_RADIUS_ADJUSTMENTS, PADDING_VALUES } from '../constants/sizing';
+import { BUTTON_SIZES, ANIMATION, COLORS, NUMERIC_CONSTANTS, ELEVATION, SHADOW_OFFSETS, BUTTON_BORDER, PADDING_VALUES } from '../constants/sizing';
+import { soundManager } from '../utils/soundManager';
 
 interface CircularIconButtonProps {
   onPress: () => void;
@@ -15,19 +16,16 @@ export default function CircularIconButton({
   style,
   children,
 }: CircularIconButtonProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const translateXAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
   const shadowOpacityAnim = useRef(new Animated.Value(1)).current;
-  const insetShadowOpacityAnim = useRef(new Animated.Value(0)).current;
-  const pressOverlayAnim = useRef(new Animated.Value(0)).current;
 
   const handlePressIn = () => {
     Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: ANIMATION.SCALE_PRESSED,
+      Animated.timing(translateXAnim, {
+        toValue: ANIMATION.TRANSLATE_X_PRESSED,
+        duration: ANIMATION.DURATION_FAST,
         useNativeDriver: true,
-        tension: ANIMATION.TENSION,
-        friction: ANIMATION.FRICTION,
       }),
       Animated.timing(translateYAnim, {
         toValue: ANIMATION.TRANSLATE_Y_PRESSED,
@@ -39,26 +37,15 @@ export default function CircularIconButton({
         duration: ANIMATION.DURATION_FAST,
         useNativeDriver: false,
       }),
-      Animated.timing(insetShadowOpacityAnim, {
-        toValue: ANIMATION.OPACITY_FULL,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: false,
-      }),
-      Animated.timing(pressOverlayAnim, {
-        toValue: ANIMATION.OPACITY_FULL,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: false,
-      }),
     ]).start();
   };
 
   const handlePressOut = () => {
     Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: ANIMATION.SCALE_NORMAL,
+      Animated.timing(translateXAnim, {
+        toValue: ANIMATION.TRANSLATE_X_NORMAL,
+        duration: ANIMATION.DURATION_FAST,
         useNativeDriver: true,
-        tension: ANIMATION.TENSION,
-        friction: ANIMATION.FRICTION,
       }),
       Animated.timing(translateYAnim, {
         toValue: ANIMATION.TRANSLATE_Y_NORMAL,
@@ -70,17 +57,14 @@ export default function CircularIconButton({
         duration: ANIMATION.DURATION_FAST,
         useNativeDriver: false,
       }),
-      Animated.timing(insetShadowOpacityAnim, {
-        toValue: ANIMATION.OPACITY_HIDDEN,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: false,
-      }),
-      Animated.timing(pressOverlayAnim, {
-        toValue: ANIMATION.OPACITY_HIDDEN,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: false,
-      }),
     ]).start();
+  };
+
+  const handlePress = () => {
+    if (!disabled) {
+      soundManager.playSound('buttonPress');
+    }
+    onPress();
   };
 
   return (
@@ -88,7 +72,7 @@ export default function CircularIconButton({
       style={[
         {
           transform: [
-            { scale: scaleAnim },
+            { translateX: translateXAnim },
             { translateY: translateYAnim },
           ],
         },
@@ -98,46 +82,22 @@ export default function CircularIconButton({
         style={[
           styles.button,
           {
-            shadowColor: COLORS.SHADOW_BLACK,
+            shadowColor: disabled ? '#B0B0B0' : COLORS.SHADOW_BLACK,
             shadowOpacity: shadowOpacityAnim,
-            shadowOffset: SHADOW_OFFSETS.STANDARD_ALT,
+            shadowOffset: SHADOW_OFFSETS.CIRCULAR,
           },
           disabled && styles.buttonDisabled,
           style,
         ]}
       >
         <TouchableOpacity
-          onPress={onPress}
+          onPress={handlePress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           disabled={disabled}
           activeOpacity={1}
           style={styles.buttonInner}
         >
-          {/* Dark overlay that appears when pressed */}
-          <Animated.View
-            style={[
-              styles.pressOverlay,
-              {
-                backgroundColor: COLORS.OVERLAY_BLUE_OPERATION_PRESSED,
-                opacity: pressOverlayAnim.interpolate({
-                  inputRange: ANIMATION.INTERPOLATION_INPUT,
-                  outputRange: ANIMATION.INTERPOLATION_OUTPUT,
-                }),
-              },
-            ]}
-            pointerEvents="none"
-          />
-          {/* Inset shadow layer for pressed state - positioned inside */}
-          <Animated.View
-            style={[
-              styles.insetShadow,
-              {
-                opacity: insetShadowOpacityAnim,
-              },
-            ]}
-            pointerEvents="none"
-          />
           {children}
         </TouchableOpacity>
       </Animated.View>
@@ -153,7 +113,7 @@ const styles = StyleSheet.create({
     borderRadius: BUTTON_SIZES.NAV_ARROW_SIZE / NUMERIC_CONSTANTS.DIVIDE_BY_2, // Circular
     borderWidth: BUTTON_BORDER.WIDTH,
     borderColor: BUTTON_BORDER.COLOR,
-    shadowRadius: ELEVATION.NONE,
+    shadowRadius: 0, // Solid black shadow
     elevation: ELEVATION.NONE,
   },
   buttonInner: {
@@ -164,29 +124,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     padding: PADDING_VALUES.ZERO, // Ensure no padding affects centering
-  },
-  pressOverlay: {
-    position: 'absolute',
-    top: NUMERIC_CONSTANTS.POSITION_TOP,
-    left: NUMERIC_CONSTANTS.POSITION_LEFT,
-    right: NUMERIC_CONSTANTS.POSITION_RIGHT,
-    bottom: NUMERIC_CONSTANTS.POSITION_BOTTOM,
-    borderRadius: BUTTON_SIZES.NAV_ARROW_SIZE / NUMERIC_CONSTANTS.DIVIDE_BY_2, // Circular
-  },
-  insetShadow: {
-    position: 'absolute',
-    top: SHADOW.OFFSET_SMALL.height / NUMERIC_CONSTANTS.DIVIDE_BY_2,
-    left: SHADOW.OFFSET_SMALL.width / NUMERIC_CONSTANTS.DIVIDE_BY_2,
-    right: SHADOW.OFFSET_SMALL.width / NUMERIC_CONSTANTS.DIVIDE_BY_2,
-    bottom: SHADOW.OFFSET_SMALL.height / NUMERIC_CONSTANTS.DIVIDE_BY_2,
-    borderRadius: (BUTTON_SIZES.NAV_ARROW_SIZE / NUMERIC_CONSTANTS.DIVIDE_BY_2) - BORDER_RADIUS_ADJUSTMENTS.INSET_SHADOW_OFFSET, // Circular
-    borderWidth: INSET_SHADOW.BORDER_WIDTH,
-    borderColor: COLORS.BORDER_DARK,
-    shadowColor: COLORS.SHADOW_BLACK,
-    shadowOffset: SHADOW_OFFSETS.ZERO,
-    shadowOpacity: ANIMATION.OPACITY_SHADOW_FULL,
-    shadowRadius: SHADOW.RADIUS_SMALL,
-    elevation: ELEVATION.NONE,
   },
   buttonDisabled: {
     backgroundColor: COLORS.BACKGROUND_DISABLED,
