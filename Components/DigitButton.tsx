@@ -103,7 +103,16 @@ const DigitButton = forwardRef<ComponentRef<typeof TouchableOpacity>, DigitButto
           activeOpacity={1}
           style={styles.buttonInner}
         >
-          <Text style={[styles.text, { color: getTextColor() }, textStyle]}>
+          <Text style={[
+            styles.text,
+            { 
+              color: getTextColor(),
+              fontSize: digit.toString().length > 2 
+                ? FONT_SIZES.DIGIT_TEXT * 0.7 // Shrink to 70% for 3+ digits
+                : FONT_SIZES.DIGIT_TEXT
+            },
+            textStyle
+          ]}>
             {digit}
           </Text>
         </TouchableOpacity>
@@ -139,9 +148,9 @@ const styles = StyleSheet.create({
     // Transform is now handled by animated translateX/translateY on outer Animated.View
   },
   text: {
-    fontSize: FONT_SIZES.DIGIT_TEXT,
-    fontFamily: 'Digital-7-Mono',
-    ...TEXT_SHADOW_BOLD_MEDIUM, // Use text shadow for bold effect (fontWeight doesn't work with Digital-7 Mono)
+    // fontSize is now set dynamically based on digit length
+    fontWeight: 'bold',
+    ...TEXT_SHADOW_BOLD_MEDIUM,
   },
 });
 

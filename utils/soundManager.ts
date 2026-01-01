@@ -64,6 +64,7 @@ class SoundManager {
       await this.loadSound('buttonPress', require('../assets/sounds/button-press.mp3'));
       await this.loadSound('buttonRelease', require('../assets/sounds/button-release.wav'));
       await this.loadSound('errorClick', require('../assets/sounds/error-click.wav'));
+      await this.loadSound('puzzleComplete', require('../assets/sounds/success.wav'));
     } catch (error) {
       console.warn('Failed to load some sounds:', error);
     }

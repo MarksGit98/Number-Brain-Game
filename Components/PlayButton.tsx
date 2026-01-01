@@ -91,7 +91,10 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     includeFontPadding: false,
     lineHeight: FONT_SIZES.TARGET_NUMBER,
-    ...TEXT_SHADOW_BOLD_STRONG, // Use text shadow for bold effect (fontWeight doesn't work with Digital-7 Mono)
+    // Enhanced shadow for 3D pop effect (matching targetNumber in GameScreen)
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 3,
   },
 });
 

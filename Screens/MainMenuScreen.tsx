@@ -6,7 +6,8 @@ import PlayButton from '../Components/PlayButton';
 import DifficultyButton from '../Components/DifficultyButton';
 import SettingsButton from '../Components/SettingsButton';
 import LibraryButton from '../Components/LibraryButton';
-import { FONT_SIZES, SPACING, BUTTON_SIZES } from '../constants/sizing';
+import PressableButton3D from '../Components/PressableButton3D';
+import { FONT_SIZES, SPACING, BUTTON_SIZES, COLORS, BORDER_RADIUS, BUTTON_BORDER } from '../constants/sizing';
 
 interface MainMenuScreenProps {
   selectedDifficulty: Difficulty;
@@ -14,6 +15,7 @@ interface MainMenuScreenProps {
   onStartGame: () => void;
   onOpenLevelLibrary: () => void;
   onOpenSettings: () => void;
+  onOpenHowToPlay: () => void;
 }
 
 export default function MainMenuScreen({
@@ -22,6 +24,7 @@ export default function MainMenuScreen({
   onStartGame,
   onOpenLevelLibrary,
   onOpenSettings,
+  onOpenHowToPlay,
 }: MainMenuScreenProps) {
   return (
     <View style={styles.menuContainer}>
@@ -59,6 +62,14 @@ export default function MainMenuScreen({
             isSelected={selectedDifficulty === 'hard'}
           />
         </View>
+
+        <PressableButton3D
+          onPress={onOpenHowToPlay}
+          style={styles.howToPlayButton}
+          textStyle={styles.howToPlayButtonText}
+        >
+          How to Play
+        </PressableButton3D>
       </View>
     </View>
   );
@@ -198,6 +209,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  howToPlayButton: {
+    width: '80%',
+    paddingVertical: SPACING.PADDING_MEDIUM,
+    paddingHorizontal: SPACING.PADDING_LARGE,
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    backgroundColor: COLORS.BUTTON_BLUE,
+    borderWidth: BUTTON_BORDER.WIDTH,
+    borderColor: BUTTON_BORDER.COLOR,
+    marginTop: SPACING.MARGIN_MEDIUM,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  howToPlayButtonText: {
+    fontSize: FONT_SIZES.BUTTON_TEXT,
+    fontWeight: 'bold',
+    color: COLORS.BACKGROUND_WHITE,
   },
 });
 

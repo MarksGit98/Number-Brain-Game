@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity, StyleSheet, Animated, Text, ViewStyle, TextStyle } from 'react-native';
 import { FONT_SIZES } from '../constants/sizing';
+import { soundManager } from '../utils/soundManager';
 
 interface TabButtonProps {
   label: string;
@@ -68,7 +69,10 @@ export default function TabButton({
       ]}
     >
       <TouchableOpacity
-        onPress={onPress}
+        onPress={() => {
+          soundManager.playSound('buttonPress');
+          onPress();
+        }}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         activeOpacity={1}

@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { TouchableOpacity, StyleSheet, Animated, Text, ViewStyle } from 'react-native';
 import { BUTTON_SIZES, FONT_SIZES, BORDER_RADIUS, BUTTON_BORDER, ANIMATION, COLORS, SHADOW_OFFSETS, SPACING } from '../constants/sizing';
 import { TEXT_SHADOW_BOLD_STRONG } from '../constants/fonts';
+import { soundManager } from '../utils/soundManager';
 
 interface PuzzleCardProps {
   levelNumber: number;
@@ -88,13 +89,23 @@ export default function PuzzleCard({
         ]}
       >
         <TouchableOpacity
-          onPress={onPress}
+          onPress={() => {
+            soundManager.playSound('buttonPress');
+            onPress();
+          }}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           activeOpacity={1}
           style={styles.buttonInner}
         >
-          <Text style={styles.text}>
+          <Text style={[
+            styles.text,
+            {
+              fontSize: levelNumber.toString().length > 2
+                ? FONT_SIZES.DIGIT_TEXT * 0.7 // Shrink to 70% for 3+ digits
+                : FONT_SIZES.DIGIT_TEXT // Match digit button font size
+            }
+          ]}>
             {levelNumber}
           </Text>
         </TouchableOpacity>
@@ -123,8 +134,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   text: {
-    fontSize: FONT_SIZES.DIGIT_TEXT * 1.2, // Increase font size by 20%
-    fontFamily: 'Digital-7-Mono',
+    // fontSize is now set dynamically based on levelNumber length
+    fontWeight: 'bold',
     color: COLORS.TEXT_WHITE,
     ...TEXT_SHADOW_BOLD_STRONG, // Use stronger text shadow for bolder effect
   },

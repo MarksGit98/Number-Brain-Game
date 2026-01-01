@@ -11,6 +11,7 @@ interface SettingsModalProps {
   onMusicToggle: (enabled: boolean) => void;
   onSoundEffectsToggle: (enabled: boolean) => void;
   onPurchaseAdFree: () => void;
+  onPrivacyPolicyPress?: () => void;
 }
 
 interface ButtonWithAnimationProps {
@@ -115,6 +116,7 @@ export default function SettingsModal({
   onMusicToggle,
   onSoundEffectsToggle,
   onPurchaseAdFree,
+  onPrivacyPolicyPress,
 }: SettingsModalProps) {
   const handleBackdropPress = () => {
     onClose();
@@ -180,6 +182,20 @@ export default function SettingsModal({
                   />
                 </TouchableOpacity>
               </View>
+
+              {/* Privacy Policy Link */}
+              {onPrivacyPolicyPress && (
+                <TouchableOpacity
+                  onPress={() => {
+                    soundManager.playSound('buttonPress');
+                    onPrivacyPolicyPress();
+                  }}
+                  style={styles.privacyPolicyLink}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.privacyPolicyLinkText}>Privacy Policy</Text>
+                </TouchableOpacity>
+              )}
 
               {/* Ad-Free Purchase Button */}
               <ButtonWithAnimation
@@ -309,6 +325,17 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_TERTIARY,
     fontSize: FONT_SIZES.BUTTON_TEXT,
     fontWeight: '500' as const,
+  },
+  privacyPolicyLink: {
+    paddingVertical: SPACING.PADDING_SMALL,
+    marginBottom: SPACING.MARGIN_SMALL,
+    alignItems: 'center' as const,
+  },
+  privacyPolicyLinkText: {
+    color: COLORS.BUTTON_BLUE,
+    fontSize: FONT_SIZES.BUTTON_TEXT,
+    fontWeight: '500' as const,
+    textDecorationLine: 'underline' as const,
   },
 });
 

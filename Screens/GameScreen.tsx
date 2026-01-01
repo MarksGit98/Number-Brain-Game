@@ -10,7 +10,7 @@ import HomeButton from '../Components/HomeButton';
 import LibraryButton from '../Components/LibraryButton';
 import SettingsButton from '../Components/SettingsButton';
 import PressableButton3D from '../Components/PressableButton3D';
-import { SCREEN_DIMENSIONS, FONT_SIZES, SPACING, CALCULATOR_DISPLAY, HISTORY_BOX, LEVEL_POSITION, CONTROLS, BORDER_RADIUS, SHADOW, LETTER_SPACING, BUTTON_SIZES, DIGIT_CONTAINER_POSITION, COLORS, FONT_WEIGHTS, SHADOW_OFFSETS, ELEVATION, ANIMATION, NUMERIC_CONSTANTS, BUTTON_BORDER } from '../constants/sizing';
+import { SCREEN_DIMENSIONS, FONT_SIZES, SPACING, CALCULATOR_DISPLAY, HISTORY_BOX, LEVEL_POSITION, CONTROLS, BORDER_RADIUS, SHADOW, LETTER_SPACING, BUTTON_SIZES, DIGIT_CONTAINER_POSITION, COLORS, FONT_WEIGHTS, SHADOW_OFFSETS, ELEVATION, ANIMATION, NUMERIC_CONSTANTS, BUTTON_BORDER, PADDING_VALUES } from '../constants/sizing';
 import { TEXT_SHADOW_BOLD_STRONG, TEXT_SHADOW_BOLD_MEDIUM, TEXT_SHADOW_BOLD_EXTRA } from '../constants/fonts';
 
 const SCREEN_WIDTH = SCREEN_DIMENSIONS.WIDTH;
@@ -134,50 +134,144 @@ export default function GameScreen({
           ref={digitContainerRef}
           style={styles.digitsContainerWrapper}
         >
-          <View style={styles.digitsContainer}>
-            {gameState.digits.map((digit, index) => {
-              const isFirstSelected = 
-                gameState.selectedIndices[0] === index || 
-                gameState.firstSelectedIndex === index;
-              const isSecondSelected = 
-                gameState.selectedIndices[1] === index || 
-                gameState.secondSelectedIndex === index;
-              
-              const isAnimatingThis = isAnimating && animatingDigit === digit && gameState.digits.length === 1;
-              const isShakingThis = (isShaking && gameState.digits.length === 1) || shakingDigitIndices.includes(index);
-              const isErrorThis = errorDigitIndex === index;
-              
-              const digitButton = (
-                <DigitButton
-                  key={index}
-                  ref={isAnimatingThis ? animatingDigitButtonRef : undefined}
-                  digit={digit}
-                  onPress={() => onDigitPress(index)}
-                  disabled={isAnimating || isShaking || shakingDigitIndices.length > 0}
-                  isFirstSelected={isFirstSelected}
-                  isSecondSelected={isSecondSelected}
-                  isError={isErrorThis}
-                  isAnimating={isAnimatingThis}
-                />
-              );
-              
-              // Wrap in Animated.View to apply shake animation when shaking
-              if (isShakingThis) {
-                return (
-                  <Animated.View
+          {difficulty === 'medium' && gameState.digits.length === 5 ? (
+            // Medium puzzle with 5 tiles: 3 in first row, 2 in second row
+            <View style={styles.digitsContainerMedium5}>
+              <View style={styles.digitRow}>
+                {gameState.digits.slice(0, 3).map((digit, index) => {
+                  const isFirstSelected = 
+                    gameState.selectedIndices[0] === index || 
+                    gameState.firstSelectedIndex === index;
+                  const isSecondSelected = 
+                    gameState.selectedIndices[1] === index || 
+                    gameState.secondSelectedIndex === index;
+                  
+                  const isAnimatingThis = isAnimating && animatingDigit === digit && gameState.digits.length === 1;
+                  const isShakingThis = (isShaking && gameState.digits.length === 1) || shakingDigitIndices.includes(index);
+                  const isErrorThis = errorDigitIndex === index;
+                  
+                  const digitButton = (
+                    <DigitButton
+                      key={index}
+                      ref={isAnimatingThis ? animatingDigitButtonRef : undefined}
+                      digit={digit}
+                      onPress={() => onDigitPress(index)}
+                      disabled={isAnimating || isShaking || shakingDigitIndices.length > 0}
+                      isFirstSelected={isFirstSelected}
+                      isSecondSelected={isSecondSelected}
+                      isError={isErrorThis}
+                      isAnimating={isAnimatingThis}
+                    />
+                  );
+                  
+                  if (isShakingThis) {
+                    return (
+                      <Animated.View
+                        key={index}
+                        style={{
+                          transform: [{ translateX: shakeTranslateX }],
+                        }}
+                      >
+                        {digitButton}
+                      </Animated.View>
+                    );
+                  }
+                  
+                  return digitButton;
+                })}
+              </View>
+              <View style={styles.digitRow}>
+                {gameState.digits.slice(3, 5).map((digit, index) => {
+                  const actualIndex = index + 3;
+                  const isFirstSelected = 
+                    gameState.selectedIndices[0] === actualIndex || 
+                    gameState.firstSelectedIndex === actualIndex;
+                  const isSecondSelected = 
+                    gameState.selectedIndices[1] === actualIndex || 
+                    gameState.secondSelectedIndex === actualIndex;
+                  
+                  const isAnimatingThis = isAnimating && animatingDigit === digit && gameState.digits.length === 1;
+                  const isShakingThis = (isShaking && gameState.digits.length === 1) || shakingDigitIndices.includes(actualIndex);
+                  const isErrorThis = errorDigitIndex === actualIndex;
+                  
+                  const digitButton = (
+                    <DigitButton
+                      key={actualIndex}
+                      ref={isAnimatingThis ? animatingDigitButtonRef : undefined}
+                      digit={digit}
+                      onPress={() => onDigitPress(actualIndex)}
+                      disabled={isAnimating || isShaking || shakingDigitIndices.length > 0}
+                      isFirstSelected={isFirstSelected}
+                      isSecondSelected={isSecondSelected}
+                      isError={isErrorThis}
+                      isAnimating={isAnimatingThis}
+                    />
+                  );
+                  
+                  if (isShakingThis) {
+                    return (
+                      <Animated.View
+                        key={actualIndex}
+                        style={{
+                          transform: [{ translateX: shakeTranslateX }],
+                        }}
+                      >
+                        {digitButton}
+                      </Animated.View>
+                    );
+                  }
+                  
+                  return digitButton;
+                })}
+              </View>
+            </View>
+          ) : (
+            // Default layout (4 in a row for easy/4 tiles, or default wrap for others)
+            <View style={styles.digitsContainer}>
+              {gameState.digits.map((digit, index) => {
+                const isFirstSelected = 
+                  gameState.selectedIndices[0] === index || 
+                  gameState.firstSelectedIndex === index;
+                const isSecondSelected = 
+                  gameState.selectedIndices[1] === index || 
+                  gameState.secondSelectedIndex === index;
+                
+                const isAnimatingThis = isAnimating && animatingDigit === digit && gameState.digits.length === 1;
+                const isShakingThis = (isShaking && gameState.digits.length === 1) || shakingDigitIndices.includes(index);
+                const isErrorThis = errorDigitIndex === index;
+                
+                const digitButton = (
+                  <DigitButton
                     key={index}
-                    style={{
-                      transform: [{ translateX: shakeTranslateX }],
-                    }}
-                  >
-                    {digitButton}
-                  </Animated.View>
+                    ref={isAnimatingThis ? animatingDigitButtonRef : undefined}
+                    digit={digit}
+                    onPress={() => onDigitPress(index)}
+                    disabled={isAnimating || isShaking || shakingDigitIndices.length > 0}
+                    isFirstSelected={isFirstSelected}
+                    isSecondSelected={isSecondSelected}
+                    isError={isErrorThis}
+                    isAnimating={isAnimatingThis}
+                  />
                 );
-              }
-              
-              return digitButton;
-            })}
-          </View>
+                
+                // Wrap in Animated.View to apply shake animation when shaking
+                if (isShakingThis) {
+                  return (
+                    <Animated.View
+                      key={index}
+                      style={{
+                        transform: [{ translateX: shakeTranslateX }],
+                      }}
+                    >
+                      {digitButton}
+                    </Animated.View>
+                  );
+                }
+                
+                return digitButton;
+              })}
+            </View>
+          )}
         </View>
       
         {/* Animated tile that floats up and fades out */}
@@ -212,15 +306,12 @@ export default function GameScreen({
                 isSelected={gameState.selectedOperation === op}
               />
             ))}
+            <UndoButton
+              onPress={onUndo}
+              disabled={gameState.history.length === 0}
+              style={styles.undoButtonInRow}
+            />
           </View>
-        </View>
-
-        {/* Undo Button - positioned between operations and history */}
-        <View style={styles.undoButtonWrapper}>
-          <UndoButton
-            onPress={onUndo}
-            disabled={gameState.history.length === 0}
-          />
         </View>
 
         {/* History Container */}
@@ -254,7 +345,7 @@ export default function GameScreen({
               ]}>
                 <Text style={styles.historyNumber}>{index + 1})</Text>
                 <Text style={styles.historyText}>
-                  {entry.operands[0]} {entry.operation} {entry.operands[1]} = {entry.result}
+                  {entry.operands[0]} {entry.operation === '*' ? '×' : entry.operation === '/' ? '÷' : entry.operation} {entry.operands[1]} = {entry.result}
                 </Text>
               </View>
             ))
@@ -307,6 +398,7 @@ const styles = StyleSheet.create({
   levelNumberContainer: {
     width: '100%' as const,
     alignItems: 'center',
+    marginTop: -SCREEN_HEIGHT * 0.015, // Shift up by 1.5% of screen height
     marginBottom: SPACING.MARGIN_SMALL,
   },
   targetContainerWrapper: {
@@ -351,6 +443,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%' as const,
   },
+  digitsContainerMedium5: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '100%' as const,
+  },
+  digitRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    width: '100%' as const,
+  },
   digitButton: {
     width: 75,
     height: 75,
@@ -384,12 +486,20 @@ const styles = StyleSheet.create({
   operationsContainerWrapper: {
     width: '100%' as const,
     alignItems: 'center',
-    marginBottom: 0, // Removed margin, spacing handled by undo button wrapper
+    marginBottom: SPACING.MARGIN_SMALL,
   },
   operationsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     width: '100%' as const,
+  },
+  undoButtonInRow: {
+    // Override CircularIconButton default size to match scaled operation buttons
+    width: BUTTON_SIZES.OPERATION_BUTTON_SIZE, // Match operation button size (scaled down 5%)
+    height: BUTTON_SIZES.OPERATION_BUTTON_SIZE,
+    borderRadius: BUTTON_SIZES.OPERATION_BUTTON_SIZE / NUMERIC_CONSTANTS.DIVIDE_BY_2, // Circular
+    marginLeft: BUTTON_SIZES.OPERATION_BUTTON_MARGIN,
   },
   operationButton: {
     width: 65,
@@ -415,12 +525,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  undoButtonWrapper: {
-    width: '100%' as const,
-    alignItems: 'center',
-    marginTop: SPACING.MARGIN_SMALL,
-    marginBottom: SPACING.MARGIN_SMALL,
-  },
   historyContainerWrapper: {
     width: '100%' as const,
     alignItems: 'center',
@@ -431,7 +535,7 @@ const styles = StyleSheet.create({
   },
   historyContainer: {
     backgroundColor: '#fff',
-    padding: HISTORY_BOX.PADDING,
+    padding: HISTORY_BOX.PADDING, // Equal padding on all sides
     borderRadius: HISTORY_BOX.BORDER_RADIUS,
     width: HISTORY_BOX.WIDTH,
     maxWidth: HISTORY_BOX.MAX_WIDTH,
@@ -440,14 +544,8 @@ const styles = StyleSheet.create({
     shadowOpacity: SHADOW.OPACITY_LIGHT,
     shadowRadius: SHADOW.RADIUS_MEDIUM,
     elevation: 2,
-    overflow: 'hidden', // Ensure content doesn't overflow rounded corners
-    alignSelf: 'flex-start', // Prevent stretching to full wrapper height
-  },
-  historyTitle: {
-    fontSize: FONT_SIZES.HISTORY_TITLE,
-    fontWeight: 'bold' as const,
-    color: COLORS.TEXT_TERTIARY,
-    marginBottom: HISTORY_BOX.TITLE_MARGIN_BOTTOM,
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
   historyBar: {
     flexDirection: 'row',
@@ -494,8 +592,8 @@ const styles = StyleSheet.create({
   },
   libraryButtonContainer: {
     position: 'absolute',
-    bottom: BUTTON_SIZES.NAV_ARROW_BOTTOM,
-    right: BUTTON_SIZES.NAV_ARROW_HORIZONTAL,
+    bottom: SPACING.CONTAINER_PADDING_TOP, // Same gap from bottom as top buttons have from top
+    right: SPACING.CONTAINER_PADDING_HORIZONTAL, // Same gap from right as top buttons
     width: BUTTON_SIZES.NAV_ARROW_SIZE,
     height: BUTTON_SIZES.NAV_ARROW_SIZE,
     zIndex: 10,

@@ -8,6 +8,7 @@ import MainMenuScreen from './Screens/MainMenuScreen';
 import GameScreen from './Screens/GameScreen';
 import LevelLibraryScreen from './Screens/LevelLibraryScreen';
 import SettingsModal from './Components/SettingsModal';
+import HowToPlayModal from './Components/HowToPlayModal';
 import { soundManager } from './utils/soundManager';
 import { SCREEN_DIMENSIONS } from './constants/sizing';
 
@@ -42,6 +43,7 @@ export default function App() {
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set());
   const [libraryTab, setLibraryTab] = useState<Difficulty>('easy');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showHowToPlayModal, setShowHowToPlayModal] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
   const [isLoadingSavedData, setIsLoadingSavedData] = useState(true);
@@ -250,6 +252,11 @@ export default function App() {
     // TODO: Implement ad-free purchase logic
   };
 
+  const handlePrivacyPolicyPress = () => {
+    // TODO: Add privacy policy link/URL
+    Alert.alert('Privacy Policy', 'Privacy policy link will be added here');
+  };
+
   if (showLevelLibrary) {
     return (
       <>
@@ -270,6 +277,7 @@ export default function App() {
           onMusicToggle={handleMusicToggle}
           onSoundEffectsToggle={handleSoundEffectsToggle}
           onPurchaseAdFree={handlePurchaseAdFree}
+          onPrivacyPolicyPress={handlePrivacyPolicyPress}
         />
       </>
     );
@@ -284,6 +292,7 @@ export default function App() {
           onStartGame={startGame}
           onOpenLevelLibrary={openLevelLibrary}
           onOpenSettings={() => setShowSettingsModal(true)}
+          onOpenHowToPlay={() => setShowHowToPlayModal(true)}
         />
         <SettingsModal
           visible={showSettingsModal}
@@ -293,6 +302,11 @@ export default function App() {
           onMusicToggle={handleMusicToggle}
           onSoundEffectsToggle={handleSoundEffectsToggle}
           onPurchaseAdFree={handlePurchaseAdFree}
+          onPrivacyPolicyPress={handlePrivacyPolicyPress}
+        />
+        <HowToPlayModal
+          visible={showHowToPlayModal}
+          onClose={() => setShowHowToPlayModal(false)}
         />
       </>
     );
@@ -505,6 +519,9 @@ export default function App() {
 
     // Check win condition
     if (newDigits.length === 1 && newDigits[0] === prev.target) {
+      // Play success sound
+      soundManager.playSound('puzzleComplete');
+      
       // Wait half a second to show the final tile, then start animation
       setTimeout(() => {
         setIsAnimating(true);

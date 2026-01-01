@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle, TextStyle, Animated } from 'react-native';
 import { PressableButton3DStyles } from '../Styles/buttonStyles';
+import { soundManager } from '../utils/soundManager';
 
 interface PressableButton3DProps {
   onPress: () => void;
@@ -92,6 +93,13 @@ export default function PressableButton3D({
   const sizeStyle = getSizeStyles();
   const disabledStyle = disabled ? PressableButton3DStyles.disabled : {};
 
+  const handlePress = () => {
+    if (!disabled) {
+      soundManager.playSound('buttonPress');
+    }
+    onPress();
+  };
+
   return (
     <Animated.View
       style={[
@@ -104,7 +112,7 @@ export default function PressableButton3D({
       ]}
     >
       <TouchableOpacity
-        onPress={onPress}
+        onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         disabled={disabled}

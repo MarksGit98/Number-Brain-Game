@@ -9,6 +9,7 @@ import HomeButton from '../Components/HomeButton';
 import SettingsButton from '../Components/SettingsButton';
 import { FONT_SIZES, SPACING, BUTTON_SIZES, COLORS, ANIMATION, SHADOW_OFFSETS, BORDER_RADIUS, BUTTON_BORDER, SCREEN_DIMENSIONS, CALCULATOR_DISPLAY, LETTER_SPACING } from '../constants/sizing';
 import { TEXT_SHADOW_BOLD_STRONG } from '../constants/fonts';
+import { soundManager } from '../utils/soundManager';
 
 interface LevelLibraryScreenProps {
   libraryTab: Difficulty;
@@ -125,7 +126,10 @@ const DifficultyLabelButton = ({ label, color, onPress, isSelected, style }: Dif
         ]}
       >
         <TouchableOpacity
-          onPress={onPress}
+          onPress={() => {
+            soundManager.playSound('buttonPress');
+            onPress();
+          }}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           activeOpacity={1}
@@ -276,7 +280,10 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     includeFontPadding: false,
     lineHeight: FONT_SIZES.TARGET_NUMBER * 0.35,
-    ...TEXT_SHADOW_BOLD_STRONG,
+    // Enhanced shadow for 3D pop effect (matching targetNumber in GameScreen)
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 3,
   },
   homeButtonContainer: {
     position: 'absolute',

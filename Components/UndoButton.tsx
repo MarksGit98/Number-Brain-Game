@@ -1,7 +1,7 @@
 import React from 'react';
 import { ViewStyle, StyleSheet } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { FONT_SIZES, NUMERIC_CONSTANTS, COLORS } from '../constants/sizing';
+import { FONT_SIZES, NUMERIC_CONSTANTS, COLORS, BUTTON_SIZES } from '../constants/sizing';
 import CircularIconButton from './CircularIconButton';
 
 // Undo arrow SVG with white fill and black stroke
@@ -23,6 +23,14 @@ export default function UndoButton({
     ? { ...styles.undoButtonDisabled, ...style }
     : style;
   
+  // Calculate icon size based on button size (if style overrides size, scale icon proportionally)
+  const buttonSize = (style && 'width' in style && typeof style.width === 'number') 
+    ? style.width 
+    : BUTTON_SIZES.NAV_ARROW_SIZE;
+  // Scale icon proportionally to button size (95% of NAV_ARROW_SIZE means icon should be 95% of original)
+  const iconSizeMultiplier = buttonSize / BUTTON_SIZES.NAV_ARROW_SIZE;
+  const iconSizeScaled = FONT_SIZES.BUTTON_TEXT * NUMERIC_CONSTANTS.FONT_MULTIPLIER_NAV_ARROW * iconSizeMultiplier;
+  
   return (
     <CircularIconButton
       onPress={onPress}
@@ -31,8 +39,8 @@ export default function UndoButton({
     >
       <SvgXml 
         xml={undoIconSvg} 
-        width={FONT_SIZES.BUTTON_TEXT * NUMERIC_CONSTANTS.FONT_MULTIPLIER_NAV_ARROW} 
-        height={FONT_SIZES.BUTTON_TEXT * NUMERIC_CONSTANTS.FONT_MULTIPLIER_NAV_ARROW} 
+        width={iconSizeScaled} 
+        height={iconSizeScaled} 
       />
     </CircularIconButton>
   );

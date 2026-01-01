@@ -61,15 +61,15 @@ export const BUTTON_SIZES = {
   
   // Digit buttons - sized to fit 4 tiles on one line
   // 4 tiles + 3 margins = ~92% of screen width, leaving room for padding
-  DIGIT_BUTTON_SIZE: SCREEN_WIDTH * 0.19, // ~71px on base (reduced from 75px)
+  DIGIT_BUTTON_SIZE: SCREEN_WIDTH * 0.171, // ~64px on base (reduced by 10% from 0.19)
   DIGIT_BUTTON_MARGIN: SCREEN_WIDTH * 0.015, // ~6px on base (reduced from 8px)
   
-  // Operation buttons - smaller and circular
-  OPERATION_BUTTON_SIZE: SCREEN_WIDTH * 0.15, // ~56px on base (smaller than digit buttons)
+  // Operation buttons - smaller and circular (reduced by 5% to fit with undo button)
+  OPERATION_BUTTON_SIZE: SCREEN_WIDTH * 0.1425, // ~53px on base (reduced by 5% from 0.15)
   OPERATION_BUTTON_MARGIN: SCREEN_WIDTH * 0.021, // ~8px on base
   
   // Navigation arrows
-  NAV_ARROW_SIZE: SCREEN_WIDTH * 0.133, // ~50px on base
+  NAV_ARROW_SIZE: SCREEN_WIDTH * 0.1197, // ~45px on base (reduced by 10% from 0.133)
   NAV_ARROW_BOTTOM: SCREEN_HEIGHT * 0.025, // ~20px
   NAV_ARROW_HORIZONTAL: SCREEN_WIDTH * 0.053, // ~20px
 };
@@ -88,33 +88,25 @@ export const CALCULATOR_DISPLAY = {
 export const HISTORY_BOX = {
   WIDTH: SCREEN_WIDTH * .92, // Full width with padding
   MAX_WIDTH: SCREEN_WIDTH * 1.013, // ~380px on base
-  PADDING: SCREEN_HEIGHT * 0.017, // ~14px
+  PADDING: SCREEN_HEIGHT * 0.017, // ~14px - equal top and bottom padding
   BORDER_RADIUS: SCREEN_HEIGHT * 0.020, // ~16px
-  MARGIN_BOTTOM: SCREEN_HEIGHT * 0.018, // ~15px
-  HEIGHT_EASY: SCREEN_HEIGHT * 0.197, // ~160px
-  HEIGHT_MEDIUM: SCREEN_HEIGHT * 0.241, // ~196px
-  HEIGHT_HARD: SCREEN_HEIGHT * 0.286, // ~232px
-  // Height calculation for dynamic history box (one line = title + one bar)
-  // One line = padding top + title + title margin + bar (padding + text + padding) + padding bottom
+  // Height calculation for one history bar (no title)
+  // One line = padding top + bar (padding + text + padding) + padding bottom
+  // Text font size is 1.06x the base, so line height accounts for this
   HEIGHT_ONE_LINE: (SCREEN_HEIGHT * 0.017) + // Padding top
-                   SCREEN_HEIGHT * 0.020 + // Title font size (approximate line height)
-                   SCREEN_HEIGHT * 0.010 + // Title margin bottom
-                   (SCREEN_HEIGHT * 0.010 * 2) + // Bar padding vertical (top + bottom)
-                   SCREEN_HEIGHT * 0.017 + // History text font size (approximate line height)
+                   (SCREEN_HEIGHT * 0.012 * 2) + // Bar padding vertical (top + bottom) - increased
+                   (SCREEN_HEIGHT * 0.017 * 1.06) + // History text font size * 1.06 (actual line height)
                    (SCREEN_HEIGHT * 0.017), // Padding bottom
-  // Height for title only (no bars)
-  HEIGHT_TITLE_ONLY: (SCREEN_HEIGHT * 0.017) + // Padding top
-                     SCREEN_HEIGHT * 0.020 + // Title font size (approximate line height)
-                     (SCREEN_HEIGHT * 0.017), // Padding bottom
   // Height per additional bar = bar padding + text + margin bottom
-  BAR_HEIGHT: (SCREEN_HEIGHT * 0.010 * 2) + // Bar padding vertical (top + bottom)
-              SCREEN_HEIGHT * 0.017 + // History text font size (approximate line height)
+  BAR_HEIGHT: (SCREEN_HEIGHT * 0.012 * 2) + // Bar padding vertical (top + bottom) - increased
+              (SCREEN_HEIGHT * 0.017 * 1.06) + // History text font size * 1.06 (actual line height)
               SCREEN_HEIGHT * 0.007, // Bar margin bottom
   BAR_PADDING_HORIZONTAL: SCREEN_WIDTH * 0.032, // ~12px
-  BAR_PADDING_VERTICAL: SCREEN_HEIGHT * 0.010, // ~8px
+  BAR_PADDING_VERTICAL: SCREEN_HEIGHT * 0.012, // ~10px (increased to prevent text cutoff)
   BAR_MARGIN_BOTTOM: SCREEN_HEIGHT * 0.007, // ~6px
   BAR_BORDER_RADIUS: SCREEN_HEIGHT * 0.007, // ~6px
-  TITLE_MARGIN_BOTTOM: SCREEN_HEIGHT * 0.010, // ~8px
+  // Max height for wrapper (hard difficulty with 5 entries)
+  HEIGHT_HARD: SCREEN_HEIGHT * 0.286, // ~232px
 };
 
 // Border radius
@@ -290,7 +282,7 @@ export const SHADOW_OFFSETS = {
   // Standard shadow offsets
   STANDARD: { width: SCREEN_WIDTH * 0.011, height: SCREEN_HEIGHT * 0.005 }, // ~4px, ~4px
   STANDARD_ALT: { width: 4, height: 4 }, // 4px, 4px (for digit/operation buttons)
-  CIRCULAR: { width: 3.0, height: 3.0 }, // ~3.0px, ~3.0px (decreased shadow offset for circular buttons)
+  CIRCULAR: { width: 2.7, height: 2.7 }, // ~2.7px, ~2.7px (reduced by 10% from 3.0)
   DIFFICULTY: { width: 4.4, height: 4.4 }, // ~4.4px, ~4.4px (10% larger for difficulty buttons - more depth)
   ZERO: { width: 0, height: 0 }, // No offset (for inset shadows)
   VERTICAL_SMALL: { width: 0, height: 2 }, // Small vertical shadow
@@ -338,7 +330,7 @@ export const NUMERIC_CONSTANTS = {
   // Multipliers
   FONT_MULTIPLIER_FULL: 1.0, // Full size multiplier
   FONT_MULTIPLIER_TAB: 0.78, // Tab text size multiplier
-  FONT_MULTIPLIER_NAV_ARROW: 1.56, // Navigation arrow text multiplier
+  FONT_MULTIPLIER_NAV_ARROW: 1.404, // Navigation arrow text multiplier (reduced by 10% from 1.56)
   FONT_MULTIPLIER_TITLE: 0.93, // Title size multiplier
   
   // Division values
