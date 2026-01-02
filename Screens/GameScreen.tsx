@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     backgroundColor: COLORS.BACKGROUND_DARK,
     paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL,
-    paddingTop: CALCULATOR_DISPLAY.PADDING_VERTICAL,
+    paddingTop: SCREEN_HEIGHT * 0.008, // Reduced top padding to decrease gap from inner border
     paddingBottom: CALCULATOR_DISPLAY.PADDING_VERTICAL,
     borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS,
     width: CALCULATOR_DISPLAY.WIDTH,
