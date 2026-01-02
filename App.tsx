@@ -648,6 +648,7 @@ export default function App() {
           
           const randomAffirmation = AFFIRMATIONS[Math.floor(Math.random() * AFFIRMATIONS.length)];
           setSuccessMessage(randomAffirmation);
+          soundManager.playSound('puzzleComplete');
           setShowSuccessBanner(true);
         });
       }, 500);

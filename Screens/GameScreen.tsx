@@ -379,40 +379,38 @@ export default function GameScreen({
             },
           ]}>
             <View style={styles.historyInnerBorder} />
-            <View style={styles.historyContent}>
-              {(() => {
-                const maxEntries = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
-                const lines = [];
+            {(() => {
+              const maxEntries = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
+              const lines = [];
+              
+              // Always render all possible lines (gray if not filled, green if filled)
+              for (let i = 0; i < maxEntries; i++) {
+                const hasEntry = i < gameState.history.length;
+                const entry = hasEntry ? gameState.history[i] : undefined;
                 
-                // Always render all possible lines (gray if not filled, green if filled)
-                for (let i = 0; i < maxEntries; i++) {
-                  const hasEntry = i < gameState.history.length;
-                  const entry = hasEntry ? gameState.history[i] : undefined;
-                  
-                  lines.push(
-                    <View key={i} style={styles.historyBar}>
-                    <View style={styles.historyNumberContainer}>
-                      <Text style={[
-                        styles.historyNumber,
-                        !hasEntry && styles.historyNumberEmpty
-                      ]}>
-                        {i + 1})
-                      </Text>
-                    </View>
-                    {hasEntry && entry ? (
-                      <Text style={styles.historyText}>
-                        {entry.operands[0]} {entry.operation === '*' ? '×' : entry.operation === '/' ? '÷' : entry.operation} {entry.operands[1]} = {entry.result}
-                      </Text>
-                    ) : (
-                      <Text style={styles.historyTextEmpty} />
-                    )}
+                lines.push(
+                  <View key={i} style={styles.historyBar}>
+                  <View style={styles.historyNumberContainer}>
+                    <Text style={[
+                      styles.historyNumber,
+                      !hasEntry && styles.historyNumberEmpty
+                    ]}>
+                      {i + 1})
+                    </Text>
                   </View>
-                  );
-                }
-                
-                return lines;
-              })()}
-            </View>
+                  {hasEntry && entry ? (
+                    <Text style={styles.historyText}>
+                      {entry.operands[0]} {entry.operation === '*' ? '×' : entry.operation === '/' ? '÷' : entry.operation} {entry.operands[1]} = {entry.result}
+                    </Text>
+                  ) : (
+                    <Text style={styles.historyTextEmpty} />
+                  )}
+                </View>
+                );
+              }
+              
+              return lines;
+            })()}
           </View>
         </View>
 
@@ -657,11 +655,15 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   historyContainer: {
-    backgroundColor: COLORS.BACKGROUND_DARK, // Same background as calculator display
-    borderRadius: HISTORY_BOX.BORDER_RADIUS,
-    width: CALCULATOR_DISPLAY.WIDTH, // Match target display box width
-    maxWidth: HISTORY_BOX.MAX_WIDTH,
-    // Metallic border effect with glisten - same as calculator display
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    backgroundColor: COLORS.BACKGROUND_DARK,
+    paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL,
+    paddingTop: CALCULATOR_DISPLAY.PADDING_VERTICAL,
+    paddingBottom: CALCULATOR_DISPLAY.PADDING_VERTICAL,
+    borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS,
+    width: CALCULATOR_DISPLAY.WIDTH,
+    // Metallic border effect with glisten - top/left highlights, bottom/right shadows for embossed depth
     // Top border is brightest (direct light), left is slightly dimmer (indirect light) for realistic corner depth
     borderTopColor: '#B0B0B0', // Brightest metallic gray (top highlight - direct light source)
     borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
@@ -671,38 +673,28 @@ const styles = StyleSheet.create({
     borderLeftWidth: BUTTON_BORDER.WIDTH * 5,
     borderRightWidth: BUTTON_BORDER.WIDTH * 5,
     borderBottomWidth: BUTTON_BORDER.WIDTH * 5,
-    // Subtle glisten effect with shadow (scaled down)
+    // Subtle glisten effect with shadow
     shadowColor: '#A0A0A0',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.25,
-    shadowRadius: 1.5,
-    elevation: 1.5,
-    overflow: 'hidden' as const, // Critical: clip content to border radius
-    alignSelf: 'center' as const, // Center horizontally like other calculator displays
-    justifyContent: 'center' as const, // Center content vertically
-    position: 'relative' as const, // Ensure absolutely positioned children are relative to this
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
+    overflow: 'hidden' as const, // Ensure content is clipped to border radius
+    display: 'flex', // Ensure flex layout
   },
   historyInnerBorder: {
-    position: 'absolute' as const,
+    position: 'absolute',
     top: BUTTON_BORDER.WIDTH * 5 + 2, // Outer border width + small gap
     left: BUTTON_BORDER.WIDTH * 5 + 2,
     right: BUTTON_BORDER.WIDTH * 5 + 2,
     bottom: BUTTON_BORDER.WIDTH * 5 + 2,
     backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
-    borderRadius: HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2,
-    zIndex: 0, // Behind content
-  },
-  historyContent: {
-    flex: 1,
-    backgroundColor: COLORS.BACKGROUND_DARK, // Lighter background for text area (#2C2C2C)
-    paddingHorizontal: HISTORY_BOX.PADDING_HORIZONTAL,
-    paddingVertical: HISTORY_BOX.PADDING_VERTICAL,
-    zIndex: 1, // Above inner border
+    borderRadius: Math.max(0, CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2), // Ensure non-negative
+    zIndex: 0, // Behind text
   },
   historyBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 0, // Padding handled by historyContent
     paddingVertical: HISTORY_BOX.BAR_PADDING_VERTICAL,
   },
   historyBarLast: {
@@ -905,12 +897,12 @@ const styles = StyleSheet.create({
     marginTop: SPACING.MARGIN_SMALL,
     alignItems: 'center',
     justifyContent: 'center',
-    // 3D depth effect with shadow
+    // Same depth styling as difficulty buttons
     shadowColor: COLORS.SHADOW_BLACK,
-    shadowOffset: SHADOW_OFFSETS.STANDARD_ALT,
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: SHADOW_OFFSETS.DIFFICULTY,
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   purchaseButtonText: {
     color: COLORS.BACKGROUND_WHITE,

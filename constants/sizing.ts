@@ -112,15 +112,15 @@ export const HISTORY_BOX = {
   // Formula: (padding top + padding bottom) + (number of lines * (bar padding * 2 + text height)) + extra padding for inner border
   // Text height = SCREEN_HEIGHT * 0.017 * 1.10
   // Added extra padding to prevent final line from being cut off by inner border
-  HEIGHT_EASY: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding (increased)
+  HEIGHT_EASY: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding
                (3 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))) + // 3 lines
-               (SCREEN_HEIGHT * 0.008), // Extra padding to prevent cutoff
-  HEIGHT_MEDIUM: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding (increased)
+               (SCREEN_HEIGHT * 0.015), // Extra height to prevent cutoff
+  HEIGHT_MEDIUM: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding
                  (4 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))) + // 4 lines
-                 (SCREEN_HEIGHT * 0.008), // Extra padding to prevent cutoff
-  HEIGHT_HARD: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding (increased)
+                 (SCREEN_HEIGHT * 0.015), // Extra height to prevent cutoff
+  HEIGHT_HARD: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding
                (5 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))) + // 5 lines
-               (SCREEN_HEIGHT * 0.012), // Extra padding to prevent cutoff (increased for hard difficulty)
+               (SCREEN_HEIGHT * 0.018), // Extra height to prevent cutoff (increased for hard difficulty)
 };
 
 // Border radius
