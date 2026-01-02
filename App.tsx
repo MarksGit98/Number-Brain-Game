@@ -3,7 +3,7 @@ import { View, Alert, Animated } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Operation, Difficulty, GameState, Puzzle } from './types';
 import { getRandomPuzzle, getPuzzlesByDifficulty, getPuzzleByIndex, getPuzzleKey, performOperation, AFFIRMATIONS } from './utils';
-import { saveCompletedPuzzles, loadCompletedPuzzles, saveLastPlayedLevel, loadLastPlayedLevel, saveMusicEnabled, loadMusicEnabled, saveSoundEffectsEnabled, loadSoundEffectsEnabled, saveAdsEnabled, loadAdsEnabled, saveAdFree, loadAdFree } from './utils/storage';
+import { saveCompletedPuzzles, loadCompletedPuzzles, saveLastPlayedLevel, loadLastPlayedLevel, saveMusicEnabled, loadMusicEnabled, saveSoundEffectsEnabled, loadSoundEffectsEnabled, saveAdsEnabled, loadAdsEnabled, saveAdFree, loadAdFree, saveDeveloperMode, loadDeveloperMode } from './utils/storage';
 import { adManager } from './utils/adManager';
 import BannerAdComponent from './Components/BannerAdComponent';
 import SampleBannerAd from './Components/SampleBannerAd';
@@ -52,6 +52,7 @@ export default function App() {
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
   const [adsEnabled, setAdsEnabled] = useState(true);
   const [isAdFree, setIsAdFree] = useState(false);
+  const [developerMode, setDeveloperMode] = useState(false);
   const [isLoadingSavedData, setIsLoadingSavedData] = useState(true);
 
   // Load saved data and initialize sounds on app start
@@ -63,10 +64,12 @@ export default function App() {
         const savedSoundEffectsEnabled = await loadSoundEffectsEnabled();
         const savedAdsEnabled = await loadAdsEnabled();
         const savedAdFree = await loadAdFree();
+        const savedDeveloperMode = await loadDeveloperMode();
         setMusicEnabled(savedMusicEnabled);
         setSoundEffectsEnabled(savedSoundEffectsEnabled);
         setAdsEnabled(savedAdsEnabled);
         setIsAdFree(savedAdFree);
+        setDeveloperMode(savedDeveloperMode);
 
         // Initialize sound manager
         await soundManager.initialize();
@@ -302,6 +305,11 @@ export default function App() {
     Alert.alert('Privacy Policy', 'Privacy policy link will be added here');
   };
 
+  const handleDeveloperModeToggle = async (enabled: boolean) => {
+    setDeveloperMode(enabled);
+    await saveDeveloperMode(enabled);
+  };
+
   if (showLevelLibrary) {
     return (
       <>
@@ -312,6 +320,7 @@ export default function App() {
           onReturnToMenu={returnToMenu}
           onSelectPuzzle={handleSelectPuzzle}
           completedPuzzles={completedPuzzles}
+          developerMode={developerMode}
           onOpenSettings={() => setShowSettingsModal(true)}
         />
       <SettingsModal
@@ -321,9 +330,11 @@ export default function App() {
         soundEffectsEnabled={soundEffectsEnabled}
         adsEnabled={adsEnabled}
         isAdFree={isAdFree}
+        developerMode={developerMode}
         onMusicToggle={handleMusicToggle}
         onSoundEffectsToggle={handleSoundEffectsToggle}
         onAdsToggle={handleAdsToggle}
+        onDeveloperModeToggle={handleDeveloperModeToggle}
         onPurchaseAdFree={handlePurchaseAdFree}
         onPrivacyPolicyPress={handlePrivacyPolicyPress}
       />
@@ -351,9 +362,11 @@ export default function App() {
           soundEffectsEnabled={soundEffectsEnabled}
           adsEnabled={adsEnabled}
           isAdFree={isAdFree}
+          developerMode={developerMode}
           onMusicToggle={handleMusicToggle}
           onSoundEffectsToggle={handleSoundEffectsToggle}
           onAdsToggle={handleAdsToggle}
+          onDeveloperModeToggle={handleDeveloperModeToggle}
           onPurchaseAdFree={handlePurchaseAdFree}
           onPrivacyPolicyPress={handlePrivacyPolicyPress}
         />
@@ -891,9 +904,11 @@ export default function App() {
         soundEffectsEnabled={soundEffectsEnabled}
         adsEnabled={adsEnabled}
         isAdFree={isAdFree}
+        developerMode={developerMode}
         onMusicToggle={handleMusicToggle}
         onSoundEffectsToggle={handleSoundEffectsToggle}
         onAdsToggle={handleAdsToggle}
+        onDeveloperModeToggle={handleDeveloperModeToggle}
         onPurchaseAdFree={handlePurchaseAdFree}
         onPrivacyPolicyPress={handlePrivacyPolicyPress}
       />

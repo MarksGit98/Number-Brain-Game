@@ -14,9 +14,10 @@ export const FONT_SIZES = {
   TITLE: SCREEN_HEIGHT * 0.048, // Increased font size (~38px on base)
   PLAY_BUTTON: SCREEN_HEIGHT * 0.11, // ~88px on base
   TARGET_NUMBER: SCREEN_HEIGHT * 0.17, // ~132px on base (increased 10% from 120px)
-  PLAY_BUTTON_TEXT: SCREEN_HEIGHT * 0.162, // ~18px on base
-  DIFFICULTY_BUTTON: SCREEN_HEIGHT * 0.022, // ~18px on base
-  DIFFICULTY_SUBTEXT: SCREEN_HEIGHT * 0.015, // ~12px on base
+  PLAY_BUTTON_TEXT: SCREEN_HEIGHT * 0.155, // ~18px on base
+  DIFFICULTY_BUTTON: SCREEN_HEIGHT * 0.023, // ~18px on base (for game screen)
+  DIFFICULTY_BUTTON_LEVELS: SCREEN_HEIGHT * 0.018, // ~14px on base (for levels screen - smaller)
+  DIFFICULTY_SUBTEXT: SCREEN_HEIGHT * 0.016, // ~12px on base
   HISTORY_TITLE: SCREEN_HEIGHT * 0.020, // ~16px on base
   HISTORY_TEXT: SCREEN_HEIGHT * 0.017, // ~14px on base
   LEVEL_NUMBER: SCREEN_HEIGHT * 0.025, // ~20px on base
@@ -55,10 +56,10 @@ export const BUTTON_SIZES = {
   PLAY_BUTTON_HEIGHT: SCREEN_HEIGHT * 0.123, // ~100px on base
   
   // Difficulty buttons
-  DIFFICULTY_BUTTON_WIDTH: SCREEN_WIDTH * 0.533, // ~200px on base
-  DIFFICULTY_BUTTON_PADDING_VERTICAL: SCREEN_HEIGHT * 0.015, // ~12px
-  DIFFICULTY_BUTTON_PADDING_HORIZONTAL: SCREEN_WIDTH * 0.053, // ~20px
-  DIFFICULTY_BUTTON_MARGIN_BOTTOM: SCREEN_HEIGHT * 0.015, // ~12px
+  DIFFICULTY_BUTTON_WIDTH: SCREEN_WIDTH * 0.52, // ~200px on base
+  DIFFICULTY_BUTTON_PADDING_VERTICAL: SCREEN_HEIGHT * 0.014, // ~12px
+  DIFFICULTY_BUTTON_PADDING_HORIZONTAL: SCREEN_WIDTH * 0.05, // ~20px
+  DIFFICULTY_BUTTON_MARGIN_BOTTOM: SCREEN_HEIGHT * 0.014, // ~12px
   
   // Digit buttons - sized to fit 4 tiles on one line
   // 4 tiles + 3 margins = ~92% of screen width, leaving room for padding
@@ -108,14 +109,18 @@ export const HISTORY_BOX = {
   // BAR_MARGIN_BOTTOM removed - lines are seamless (no margin between bars)
   BAR_BORDER_RADIUS: SCREEN_HEIGHT * 0.007, // ~6px
   // Max height calculations for each difficulty (fixed height)
-  // Formula: (padding top + padding bottom) + (number of lines * (bar padding * 2 + text height))
+  // Formula: (padding top + padding bottom) + (number of lines * (bar padding * 2 + text height)) + extra padding for inner border
   // Text height = SCREEN_HEIGHT * 0.017 * 1.10
+  // Added extra padding to prevent final line from being cut off by inner border
   HEIGHT_EASY: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding (increased)
-               (3 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))), // 3 lines
+               (3 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))) + // 3 lines
+               (SCREEN_HEIGHT * 0.008), // Extra padding to prevent cutoff
   HEIGHT_MEDIUM: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding (increased)
-                 (4 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))), // 4 lines
+                 (4 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))) + // 4 lines
+                 (SCREEN_HEIGHT * 0.008), // Extra padding to prevent cutoff
   HEIGHT_HARD: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding (increased)
-               (5 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))), // 5 lines
+               (5 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))) + // 5 lines
+               (SCREEN_HEIGHT * 0.012), // Extra padding to prevent cutoff (increased for hard difficulty)
 };
 
 // Border radius

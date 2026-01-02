@@ -68,7 +68,6 @@ export default function PlayButton({
       ]}
     >
       <View style={styles.innerBorder} />
-      <View style={styles.bevel} />
       <Animated.View
         style={[
           styles.darkenOverlay,
@@ -120,6 +119,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 2,
+    overflow: 'hidden' as const, // Ensure content is clipped to border radius
     display: 'flex', // Ensure flex layout
   },
   buttonInner: {
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     right: BUTTON_BORDER.WIDTH * 5 + 2,
     bottom: BUTTON_BORDER.WIDTH * 5 + 2,
     backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
-    borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2,
+    borderRadius: Math.max(0, CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2), // Ensure non-negative
     zIndex: 0, // Behind darken overlay and text
   },
   darkenOverlay: {

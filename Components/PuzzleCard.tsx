@@ -8,6 +8,7 @@ interface PuzzleCardProps {
   levelNumber: number;
   onPress: () => void;
   isCompleted: boolean;
+  isLocked?: boolean;
   style?: ViewStyle;
 }
 
@@ -15,6 +16,7 @@ export default function PuzzleCard({
   levelNumber,
   onPress,
   isCompleted,
+  isLocked = false,
   style,
 }: PuzzleCardProps) {
   const translateXAnim = useRef(new Animated.Value(0)).current;
@@ -62,6 +64,9 @@ export default function PuzzleCard({
   };
 
   const getBackgroundColor = () => {
+    if (isLocked) {
+      return COLORS.BACKGROUND_DISABLED; // Gray for locked
+    }
     return isCompleted ? COLORS.DIFFICULTY_EASY : COLORS.DIFFICULTY_HARD; // Green for completed, Red for incomplete
   };
 
@@ -90,16 +95,22 @@ export default function PuzzleCard({
       >
         <TouchableOpacity
           onPress={() => {
-            soundManager.playSound('buttonPress');
-            onPress();
+            if (!isLocked) {
+              soundManager.playSound('buttonPress');
+              onPress();
+            } else {
+              soundManager.playSound('errorClick');
+            }
           }}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          activeOpacity={1}
+          onPressIn={isLocked ? undefined : handlePressIn}
+          onPressOut={isLocked ? undefined : handlePressOut}
+          activeOpacity={isLocked ? 1 : 1}
+          disabled={isLocked}
           style={styles.buttonInner}
         >
           <Text style={[
             styles.text,
+            isLocked && styles.textLocked,
             {
               fontSize: levelNumber.toString().length > 2
                 ? FONT_SIZES.DIGIT_TEXT * 0.7 // Shrink to 70% for 3+ digits
@@ -138,6 +149,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.TEXT_WHITE,
     ...TEXT_SHADOW_BOLD_STRONG, // Use stronger text shadow for bolder effect
+  },
+  textLocked: {
+    color: COLORS.TEXT_DISABLED, // Gray text for locked levels
+    opacity: 0.6, // Additional opacity for locked appearance
   },
 });
 

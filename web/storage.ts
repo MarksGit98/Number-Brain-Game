@@ -1,4 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+/**
+ * Web-specific storage adapter using localStorage
+ * Replaces AsyncStorage for web platform
+ */
 import { Difficulty } from '../types';
 
 const STORAGE_KEYS = {
@@ -18,7 +21,7 @@ const STORAGE_KEYS = {
 export async function saveCompletedPuzzles(completedPuzzles: Set<string>): Promise<void> {
   try {
     const puzzlesArray = Array.from(completedPuzzles);
-    await AsyncStorage.setItem(STORAGE_KEYS.COMPLETED_PUZZLES, JSON.stringify(puzzlesArray));
+    localStorage.setItem(STORAGE_KEYS.COMPLETED_PUZZLES, JSON.stringify(puzzlesArray));
   } catch (error) {
     console.warn('Failed to save completed puzzles:', error);
   }
@@ -29,7 +32,7 @@ export async function saveCompletedPuzzles(completedPuzzles: Set<string>): Promi
  */
 export async function loadCompletedPuzzles(): Promise<Set<string>> {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.COMPLETED_PUZZLES);
+    const data = localStorage.getItem(STORAGE_KEYS.COMPLETED_PUZZLES);
     if (data) {
       const puzzlesArray = JSON.parse(data) as string[];
       return new Set(puzzlesArray);
@@ -48,8 +51,8 @@ export async function saveLastPlayedLevel(
   index: number
 ): Promise<void> {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.LAST_PLAYED_DIFFICULTY, difficulty);
-    await AsyncStorage.setItem(STORAGE_KEYS.LAST_PLAYED_INDEX, JSON.stringify(index));
+    localStorage.setItem(STORAGE_KEYS.LAST_PLAYED_DIFFICULTY, difficulty);
+    localStorage.setItem(STORAGE_KEYS.LAST_PLAYED_INDEX, JSON.stringify(index));
   } catch (error) {
     console.warn('Failed to save last played level:', error);
   }
@@ -63,8 +66,8 @@ export async function loadLastPlayedLevel(): Promise<{
   index: number | null;
 }> {
   try {
-    const difficulty = await AsyncStorage.getItem(STORAGE_KEYS.LAST_PLAYED_DIFFICULTY) as Difficulty | null;
-    const indexData = await AsyncStorage.getItem(STORAGE_KEYS.LAST_PLAYED_INDEX);
+    const difficulty = localStorage.getItem(STORAGE_KEYS.LAST_PLAYED_DIFFICULTY) as Difficulty | null;
+    const indexData = localStorage.getItem(STORAGE_KEYS.LAST_PLAYED_INDEX);
     const index = indexData ? JSON.parse(indexData) : null;
     return {
       difficulty,
@@ -81,7 +84,7 @@ export async function loadLastPlayedLevel(): Promise<{
  */
 export async function saveMusicEnabled(enabled: boolean): Promise<void> {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, JSON.stringify(enabled));
+    localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, JSON.stringify(enabled));
   } catch (error) {
     console.warn('Failed to save music enabled preference:', error);
   }
@@ -92,7 +95,7 @@ export async function saveMusicEnabled(enabled: boolean): Promise<void> {
  */
 export async function loadMusicEnabled(): Promise<boolean> {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.MUSIC_ENABLED);
+    const data = localStorage.getItem(STORAGE_KEYS.MUSIC_ENABLED);
     if (data !== null) {
       return JSON.parse(data) as boolean;
     }
@@ -107,7 +110,7 @@ export async function loadMusicEnabled(): Promise<boolean> {
  */
 export async function saveSoundEffectsEnabled(enabled: boolean): Promise<void> {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.SOUND_EFFECTS_ENABLED, JSON.stringify(enabled));
+    localStorage.setItem(STORAGE_KEYS.SOUND_EFFECTS_ENABLED, JSON.stringify(enabled));
   } catch (error) {
     console.warn('Failed to save sound effects enabled preference:', error);
   }
@@ -118,7 +121,7 @@ export async function saveSoundEffectsEnabled(enabled: boolean): Promise<void> {
  */
 export async function loadSoundEffectsEnabled(): Promise<boolean> {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.SOUND_EFFECTS_ENABLED);
+    const data = localStorage.getItem(STORAGE_KEYS.SOUND_EFFECTS_ENABLED);
     if (data !== null) {
       return JSON.parse(data) as boolean;
     }
@@ -133,7 +136,7 @@ export async function loadSoundEffectsEnabled(): Promise<boolean> {
  */
 export async function saveAdsEnabled(enabled: boolean): Promise<void> {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.ADS_ENABLED, JSON.stringify(enabled));
+    localStorage.setItem(STORAGE_KEYS.ADS_ENABLED, JSON.stringify(enabled));
   } catch (error) {
     console.warn('Failed to save ads enabled preference:', error);
   }
@@ -144,7 +147,7 @@ export async function saveAdsEnabled(enabled: boolean): Promise<void> {
  */
 export async function loadAdsEnabled(): Promise<boolean> {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.ADS_ENABLED);
+    const data = localStorage.getItem(STORAGE_KEYS.ADS_ENABLED);
     if (data !== null) {
       return JSON.parse(data) as boolean;
     }
@@ -159,7 +162,7 @@ export async function loadAdsEnabled(): Promise<boolean> {
  */
 export async function saveAdFree(adFree: boolean): Promise<void> {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.AD_FREE, JSON.stringify(adFree));
+    localStorage.setItem(STORAGE_KEYS.AD_FREE, JSON.stringify(adFree));
   } catch (error) {
     console.warn('Failed to save ad-free status:', error);
   }
@@ -170,7 +173,7 @@ export async function saveAdFree(adFree: boolean): Promise<void> {
  */
 export async function loadAdFree(): Promise<boolean> {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.AD_FREE);
+    const data = localStorage.getItem(STORAGE_KEYS.AD_FREE);
     if (data !== null) {
       return JSON.parse(data) as boolean;
     }
@@ -185,7 +188,7 @@ export async function loadAdFree(): Promise<boolean> {
  */
 export async function saveDeveloperMode(enabled: boolean): Promise<void> {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.DEVELOPER_MODE, JSON.stringify(enabled));
+    localStorage.setItem(STORAGE_KEYS.DEVELOPER_MODE, JSON.stringify(enabled));
   } catch (error) {
     console.warn('Failed to save developer mode preference:', error);
   }
@@ -196,7 +199,7 @@ export async function saveDeveloperMode(enabled: boolean): Promise<void> {
  */
 export async function loadDeveloperMode(): Promise<boolean> {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.DEVELOPER_MODE);
+    const data = localStorage.getItem(STORAGE_KEYS.DEVELOPER_MODE);
     if (data !== null) {
       return JSON.parse(data) as boolean;
     }
@@ -211,17 +214,11 @@ export async function loadDeveloperMode(): Promise<boolean> {
  */
 export async function clearAllGameData(): Promise<void> {
   try {
-    await AsyncStorage.multiRemove([
-      STORAGE_KEYS.COMPLETED_PUZZLES,
-      STORAGE_KEYS.LAST_PLAYED_DIFFICULTY,
-      STORAGE_KEYS.LAST_PLAYED_INDEX,
-      STORAGE_KEYS.MUSIC_ENABLED,
-      STORAGE_KEYS.SOUND_EFFECTS_ENABLED,
-      STORAGE_KEYS.ADS_ENABLED,
-      STORAGE_KEYS.AD_FREE,
-      STORAGE_KEYS.DEVELOPER_MODE,
-    ]);
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
   } catch (error) {
     console.warn('Failed to clear game data:', error);
   }
 }
+

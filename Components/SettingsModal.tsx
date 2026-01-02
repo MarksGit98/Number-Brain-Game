@@ -10,9 +10,11 @@ interface SettingsModalProps {
   soundEffectsEnabled: boolean;
   adsEnabled: boolean;
   isAdFree: boolean;
+  developerMode: boolean;
   onMusicToggle: (enabled: boolean) => void;
   onSoundEffectsToggle: (enabled: boolean) => void;
   onAdsToggle: (enabled: boolean) => void;
+  onDeveloperModeToggle: (enabled: boolean) => void;
   onPurchaseAdFree: () => void;
   onPrivacyPolicyPress?: () => void;
 }
@@ -118,9 +120,11 @@ export default function SettingsModal({
   soundEffectsEnabled,
   adsEnabled,
   isAdFree,
+  developerMode,
   onMusicToggle,
   onSoundEffectsToggle,
   onAdsToggle,
+  onDeveloperModeToggle,
   onPurchaseAdFree,
   onPrivacyPolicyPress,
 }: SettingsModalProps) {
@@ -189,27 +193,27 @@ export default function SettingsModal({
                 </TouchableOpacity>
               </View>
 
-              {/* Ads Toggle (only show if not ad-free) */}
-              {!isAdFree && (
-                <View style={styles.settingRow}>
-                  <Text style={styles.settingLabel}>Ads</Text>
-                  <TouchableOpacity
-                    style={[styles.toggle, adsEnabled && styles.toggleActive]}
-                    onPress={() => {
-                      soundManager.playSound('buttonPress');
-                      onAdsToggle(!adsEnabled);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <View 
-                      style={[
-                        styles.toggleThumb, 
-                        { alignSelf: adsEnabled ? 'flex-end' : 'flex-start' }
-                      ]} 
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
+              {/* Ads Toggle removed - ads are now purely internal, not user-visible */}
+
+              {/* Developer Mode Toggle */}
+              <View style={styles.settingRow}>
+                <Text style={styles.settingLabel}>Developer Mode</Text>
+                <TouchableOpacity
+                  style={[styles.toggle, developerMode && styles.toggleActive]}
+                  onPress={() => {
+                    soundManager.playSound('buttonPress');
+                    onDeveloperModeToggle(!developerMode);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View 
+                    style={[
+                      styles.toggleThumb, 
+                      { alignSelf: developerMode ? 'flex-end' : 'flex-start' }
+                    ]} 
+                  />
+                </TouchableOpacity>
+              </View>
 
               {/* Privacy Policy Link */}
               <TouchableOpacity

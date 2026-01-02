@@ -60,18 +60,21 @@ export default function MainMenuScreen({
             difficulty="easy"
             onPress={() => onDifficultyChange('easy')}
             isSelected={selectedDifficulty === 'easy'}
+            style={{ borderWidth: BUTTON_BORDER.WIDTH * 1.5 }} // Slightly thicker border for home screen
           />
           
           <DifficultyButton
             difficulty="medium"
             onPress={() => onDifficultyChange('medium')}
             isSelected={selectedDifficulty === 'medium'}
+            style={{ borderWidth: BUTTON_BORDER.WIDTH * 1.5 }} // Slightly thicker border for home screen
           />
           
           <DifficultyButton
             difficulty="hard"
             onPress={() => onDifficultyChange('hard')}
             isSelected={selectedDifficulty === 'hard'}
+            style={{ borderWidth: BUTTON_BORDER.WIDTH * 1.5 }} // Slightly thicker border for home screen
           />
         </View>
 
@@ -119,41 +122,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   titleContainer: {
-    backgroundColor: '#8B7355', // Light brown/tan color for solar panel (matching calculator aesthetic)
-    paddingVertical: SCREEN_HEIGHT * 0.003, // Reduced vertical padding
-    paddingHorizontal: SCREEN_WIDTH * 0.02, // Reduced horizontal padding for smaller width
-    borderRadius: SCREEN_HEIGHT * 0.006,
+    backgroundColor: '#4ADE80', // Vibrant green for solar panel container
+    paddingVertical: SCREEN_HEIGHT * 0.004, // Slightly increased padding
+    paddingHorizontal: SCREEN_WIDTH * 0.025, // Slightly increased padding
+    borderRadius: SCREEN_HEIGHT * 0.008, // Slightly larger border radius
     marginBottom: SPACING.MARGIN_MEDIUM,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: SCREEN_HEIGHT * 0.035, // Fixed smaller height
-    width: SCREEN_WIDTH * 0.4, // Scaled down to fit between top circles
+    height: SCREEN_HEIGHT * 0.045, // Increased height
+    width: SCREEN_WIDTH * 0.45, // Increased width
     alignSelf: 'center', // Center horizontally
+    // Small dark gray border around solar panel
+    borderWidth: 1,
+    borderColor: '#666666', // Dark gray border
     // Create rectangular solar panel cells
     overflow: 'hidden',
   },
   solarPanelCell: {
     flex: 1,
     height: '100%',
-    backgroundColor: '#6B5D4F', // Darker brown for individual solar panel cells
+    backgroundColor: '#22C55E', // Darker vibrant green for individual solar panel cells
     alignItems: 'center',
     justifyContent: 'center',
   },
   solarPanelDivider: {
     width: 2,
     height: '100%',
-    backgroundColor: '#8B7355', // Same as container background for vertical bar
+    backgroundColor: '#4ADE80', // Same as container background for vertical bar
   },
   titleLetter: {
-    fontSize: FONT_SIZES.TITLE,
+    fontSize: SCREEN_HEIGHT * 0.028, // Slightly larger to match bigger container
     fontFamily: 'Digital-7-Mono',
-    color: COLORS.BACKGROUND_DARK, // Same color as calculator display background
+    color: '#FFFFFF', // White text to complement vibrant green solar panel
     textAlign: 'center',
-    // Text shadow for thickness (Digital-7-Mono doesn't support bold)
-    textShadowColor: COLORS.BACKGROUND_DARK,
-    textShadowOffset: { width: 1.5, height: 1.5 },
-    textShadowRadius: 2,
+    includeFontPadding: false, // Prevent extra padding that could cause cutoff
   },
   playButton: {
     width: 200,

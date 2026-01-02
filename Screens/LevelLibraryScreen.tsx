@@ -18,6 +18,7 @@ interface LevelLibraryScreenProps {
   onReturnToMenu: () => void;
   onSelectPuzzle: (difficulty: Difficulty, puzzle: Puzzle, index: number) => void;
   completedPuzzles: Set<string>;
+  developerMode: boolean;
   onOpenSettings: () => void;
 }
 
@@ -149,6 +150,7 @@ export default function LevelLibraryScreen({
   onReturnToMenu,
   onSelectPuzzle,
   completedPuzzles,
+  developerMode,
   onOpenSettings,
 }: LevelLibraryScreenProps) {
   const puzzles = getPuzzlesByDifficulty(libraryTab);
@@ -169,6 +171,7 @@ export default function LevelLibraryScreen({
       </View>
       <View style={styles.libraryHeader}>
         <View style={styles.libraryTitleContainer}>
+          <View style={styles.libraryTitleInnerBorder} />
           <Text style={styles.libraryTitle}>LEVELS</Text>
         </View>
       </View>
@@ -228,12 +231,22 @@ export default function LevelLibraryScreen({
           const puzzleKey = getPuzzleKey(libraryTab, index);
           const isCompleted = completedPuzzles.has(puzzleKey);
           
+          // Determine if level is locked
+          // Level 1 is always unlocked, level N+1 unlocks after completing level N
+          // Developer mode unlocks all levels
+          const isLocked = !developerMode && index > 0 && !completedPuzzles.has(getPuzzleKey(libraryTab, index - 1));
+          
           return (
             <PuzzleCard
               key={index}
               levelNumber={index + 1}
-              onPress={() => onSelectPuzzle(libraryTab, puzzle, index)}
+              onPress={() => {
+                if (!isLocked) {
+                  onSelectPuzzle(libraryTab, puzzle, index);
+                }
+              }}
               isCompleted={isCompleted}
+              isLocked={isLocked}
             />
           );
         })}
@@ -259,37 +272,48 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.MARGIN_MEDIUM, // Increased from MARGIN_SMALL to create more gap
   },
   libraryTitleContainer: {
-    width: CALCULATOR_DISPLAY.WIDTH * 0.68, // Scaled down to 70% of PlayButton width
-    height: CALCULATOR_DISPLAY.HEIGHT * 0.44, // Scaled down to 50% of PlayButton height
-    borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS,
+    width: CALCULATOR_DISPLAY.WIDTH * 0.68, // Scaled down to 68% of calculator display width
+    height: CALCULATOR_DISPLAY.HEIGHT * 0.44, // Scaled down to 44% of calculator display height
+    borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS * 0.68, // Scaled border radius
     backgroundColor: COLORS.BACKGROUND_DARK,
-    paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL * 0.5, // Reduced from 0.7
-    paddingTop: CALCULATOR_DISPLAY.PADDING_VERTICAL * 0.2, // Reduced vertical padding for less gap
-    paddingBottom: CALCULATOR_DISPLAY.PADDING_VERTICAL * 0.2, // Reduced vertical padding for less gap
-    // Metallic border effect with glisten - scaled appropriately for smaller display
-    // Top border is brightest (direct light), left is slightly dimmer (indirect light) for realistic corner depth
+    paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL * 0.5,
+    paddingTop: CALCULATOR_DISPLAY.PADDING_VERTICAL * 0.2,
+    paddingBottom: CALCULATOR_DISPLAY.PADDING_VERTICAL * 0.2,
+    // Metallic border effect - matching game screen calculator display (scaled)
     borderTopColor: '#B0B0B0', // Brightest metallic gray (top highlight - direct light source)
     borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
     borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
     borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
-    borderTopWidth: BUTTON_BORDER.WIDTH * 2.5, // Scaled border width for smaller display
-    borderLeftWidth: BUTTON_BORDER.WIDTH * 2.5,
-    borderRightWidth: BUTTON_BORDER.WIDTH * 2.5,
-    borderBottomWidth: BUTTON_BORDER.WIDTH * 2.5,
-    // Subtle glisten effect with shadow (scaled down)
+    borderTopWidth: BUTTON_BORDER.WIDTH * 5, // Increased border size (matching game screen, scaled)
+    borderLeftWidth: BUTTON_BORDER.WIDTH * 5,
+    borderRightWidth: BUTTON_BORDER.WIDTH * 5,
+    borderBottomWidth: BUTTON_BORDER.WIDTH * 5,
+    // Subtle glisten effect with shadow
     shadowColor: '#A0A0A0',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.25,
-    shadowRadius: 1.5,
-    elevation: 1.5,
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
+    overflow: 'hidden' as const, // Ensure content is clipped to border radius
     display: 'flex', // Ensure flex layout
     marginTop: -SCREEN_DIMENSIONS.HEIGHT * 0.01, // Raise slightly up without affecting other elements
   },
+  libraryTitleInnerBorder: {
+    position: 'absolute',
+    // Position inner border inside outer border (scaled for smaller display)
+    top: BUTTON_BORDER.WIDTH * 5 + 2,
+    left: BUTTON_BORDER.WIDTH * 5 + 2,
+    right: BUTTON_BORDER.WIDTH * 5 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 5 + 2,
+    backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
+    borderRadius: Math.max(2, (CALCULATOR_DISPLAY.BORDER_RADIUS * 0.68) - (BUTTON_BORDER.WIDTH * 5) - 2), // Scaled border radius
+    zIndex: 0, // Behind text
+  },
   libraryTitle: {
-    fontSize: FONT_SIZES.TARGET_NUMBER * 0.35, // Scaled down to 35% of PlayButton font size
+    fontSize: FONT_SIZES.TARGET_NUMBER * 0.3, // Scaled down to 35% of PlayButton font size
     color: COLORS.TEXT_SUCCESS,
     fontFamily: 'Digital-7-Mono',
     letterSpacing: LETTER_SPACING.WIDE,
@@ -301,6 +325,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 3,
+    zIndex: 1, // Above inner border
   },
   homeButtonContainer: {
     position: 'absolute',
@@ -345,7 +370,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   difficultyLabelButtonText: {
-    fontSize: FONT_SIZES.DIFFICULTY_BUTTON * 1.05, // Increased font size
+    fontSize: FONT_SIZES.DIFFICULTY_BUTTON_LEVELS, // Smaller font size for levels screen
     fontWeight: 'bold' as const,
     color: COLORS.TEXT_WHITE,
     textAlign: 'center',

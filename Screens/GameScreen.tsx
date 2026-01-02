@@ -136,7 +136,6 @@ export default function GameScreen({
         >
           <View style={styles.targetContainer}>
             <View style={styles.targetInnerBorder} />
-            <View style={styles.targetBevel} />
             <Text style={styles.targetNumber}>{gameState.target}</Text>
           </View>
         </View>
@@ -358,18 +357,18 @@ export default function GameScreen({
             },
           ]}>
             <View style={styles.historyInnerBorder} />
-            <View style={styles.historyBevel} />
-            {(() => {
-              const maxEntries = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
-              const lines = [];
-              
-              // Always render all possible lines (gray if not filled, green if filled)
-              for (let i = 0; i < maxEntries; i++) {
-                const hasEntry = i < gameState.history.length;
-                const entry = hasEntry ? gameState.history[i] : undefined;
+            <View style={styles.historyContent}>
+              {(() => {
+                const maxEntries = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
+                const lines = [];
                 
-                lines.push(
-                  <View key={i} style={styles.historyBar}>
+                // Always render all possible lines (gray if not filled, green if filled)
+                for (let i = 0; i < maxEntries; i++) {
+                  const hasEntry = i < gameState.history.length;
+                  const entry = hasEntry ? gameState.history[i] : undefined;
+                  
+                  lines.push(
+                    <View key={i} style={styles.historyBar}>
                     <View style={styles.historyNumberContainer}>
                       <Text style={[
                         styles.historyNumber,
@@ -385,12 +384,13 @@ export default function GameScreen({
                     ) : (
                       <Text style={styles.historyTextEmpty} />
                     )}
-                  </View>
-                );
-              }
-              
-              return lines;
-            })()}
+                    </View>
+                  );
+                }
+                
+                return lines;
+              })()}
+            </View>
           </View>
         </View>
 
@@ -415,42 +415,42 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.CONTAINER_PADDING_TOP,
   },
   titleContainer: {
-    backgroundColor: '#8B7355', // Light brown/tan color for solar panel (matching calculator aesthetic)
-    paddingVertical: SCREEN_HEIGHT * 0.003, // Reduced vertical padding
-    paddingHorizontal: SCREEN_WIDTH * 0.02, // Reduced horizontal padding for smaller width
-    borderRadius: SCREEN_HEIGHT * 0.006,
+    backgroundColor: '#4ADE80', // Vibrant green for solar panel container
+    paddingVertical: SCREEN_HEIGHT * 0.004, // Slightly increased padding
+    paddingHorizontal: SCREEN_WIDTH * 0.025, // Slightly increased padding
+    borderRadius: SCREEN_HEIGHT * 0.008, // Slightly larger border radius
     marginTop: SCREEN_HEIGHT * 0.01,
     marginBottom: SPACING.MARGIN_MEDIUM,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: SCREEN_HEIGHT * 0.035, // Fixed smaller height
-    width: SCREEN_WIDTH * 0.4, // Scaled down to fit between top circles
+    height: SCREEN_HEIGHT * 0.045, // Increased height
+    width: SCREEN_WIDTH * 0.45, // Increased width
     alignSelf: 'center', // Center horizontally
+    // Small dark gray border around solar panel
+    borderWidth: 1,
+    borderColor: '#666666', // Dark gray border
     // Create rectangular solar panel cells
     overflow: 'hidden',
   },
   solarPanelCell: {
     flex: 1,
     height: '100%',
-    backgroundColor: '#6B5D4F', // Darker brown for individual solar panel cells
+    backgroundColor: '#22C55E', // Darker vibrant green for individual solar panel cells
     alignItems: 'center',
     justifyContent: 'center',
   },
   solarPanelDivider: {
     width: 2,
     height: '100%',
-    backgroundColor: '#8B7355', // Same as container background for vertical bar
+    backgroundColor: '#4ADE80', // Same as container background for vertical bar
   },
   titleLetter: {
-    fontSize: FONT_SIZES.TITLE,
+    fontSize: SCREEN_HEIGHT * 0.028, // Slightly larger to match bigger container
     fontFamily: 'Digital-7-Mono',
-    color: COLORS.BACKGROUND_DARK, // Same color as calculator display background
+    color: '#FFFFFF', // White text to complement vibrant green solar panel
     textAlign: 'center',
-    // Text shadow for thickness (Digital-7-Mono doesn't support bold)
-    textShadowColor: COLORS.BACKGROUND_DARK,
-    textShadowOffset: { width: 1.5, height: 1.5 },
-    textShadowRadius: 2,
+    includeFontPadding: false, // Prevent extra padding that could cause cutoff
   },
   homeButtonContainer: {
     position: 'absolute',
@@ -478,6 +478,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.MARGIN_SMALL,
   },
+  // Base calculator display style - reused for both target and history
   targetContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -504,6 +505,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 2,
+    overflow: 'hidden' as const, // Ensure content is clipped to border radius
     display: 'flex', // Ensure flex layout
   },
   targetInnerBorder: {
@@ -513,7 +515,7 @@ const styles = StyleSheet.create({
     right: BUTTON_BORDER.WIDTH * 5 + 2,
     bottom: BUTTON_BORDER.WIDTH * 5 + 2,
     backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
-    borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2,
+    borderRadius: Math.max(0, CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2), // Ensure non-negative
     zIndex: 0, // Behind text
   },
   targetNumber: {
@@ -633,51 +635,59 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   historyContainer: {
-    backgroundColor: COLORS.BACKGROUND_DARK, // Same background as calculator display
-    paddingHorizontal: HISTORY_BOX.PADDING_HORIZONTAL, // Horizontal padding (left/right)
-    paddingVertical: HISTORY_BOX.PADDING_VERTICAL, // Equal vertical padding (top and bottom)
+    // Simplified styling matching target container exactly
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.BACKGROUND_DARK,
+    paddingHorizontal: HISTORY_BOX.PADDING_HORIZONTAL,
+    paddingTop: HISTORY_BOX.PADDING_VERTICAL,
+    paddingBottom: HISTORY_BOX.PADDING_VERTICAL,
     borderRadius: HISTORY_BOX.BORDER_RADIUS,
-    width: CALCULATOR_DISPLAY.WIDTH, // Match target display box width
+    width: CALCULATOR_DISPLAY.WIDTH,
     maxWidth: HISTORY_BOX.MAX_WIDTH,
-    // Metallic border effect with glisten - same as calculator display
-    // Top border is brightest (direct light), left is slightly dimmer (indirect light) for realistic corner depth
-    borderTopColor: '#B0B0B0', // Brightest metallic gray (top highlight - direct light source)
-    borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
-    borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
-    borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
-    borderTopWidth: BUTTON_BORDER.WIDTH * 5, // Increased border size
+    // Metallic border effect - same as target container
+    borderTopColor: '#B0B0B0',
+    borderLeftColor: '#909090',
+    borderRightColor: '#404040',
+    borderBottomColor: '#404040',
+    borderTopWidth: BUTTON_BORDER.WIDTH * 5,
     borderLeftWidth: BUTTON_BORDER.WIDTH * 5,
     borderRightWidth: BUTTON_BORDER.WIDTH * 5,
     borderBottomWidth: BUTTON_BORDER.WIDTH * 5,
-    // Subtle glisten effect with shadow (scaled down)
+    // Shadow effect
     shadowColor: '#A0A0A0',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.25,
     shadowRadius: 1.5,
     elevation: 1.5,
-    overflow: 'hidden',
-    alignSelf: 'center', // Center horizontally like other calculator displays
-    justifyContent: 'center', // Center content vertically
+    overflow: 'hidden' as const, // Critical: clip content to border radius
+    display: 'flex',
+    alignSelf: 'center',
   },
   historyInnerBorder: {
     position: 'absolute',
-    top: BUTTON_BORDER.WIDTH * 5 + 2, // Outer border width + small gap
+    // Simplified positioning - inset from all sides to ensure it stays within outer border
+    top: BUTTON_BORDER.WIDTH * 5 + 2,
     left: BUTTON_BORDER.WIDTH * 5 + 2,
     right: BUTTON_BORDER.WIDTH * 5 + 2,
     bottom: BUTTON_BORDER.WIDTH * 5 + 2,
-    backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
-    borderRadius: HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2,
-    zIndex: 0, // Behind bevel and content
+    backgroundColor: '#1F1F1F', // Darker inner border
+    // Border radius must be smaller than outer border radius minus border width and gap
+    // Ensure it's at least 2px to maintain rounded corners
+    borderRadius: Math.max(2, HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2),
+    zIndex: 0,
   },
-  historyBevel: {
+  historyContent: {
     position: 'absolute',
-    bottom: BUTTON_BORDER.WIDTH * 5,
-    right: BUTTON_BORDER.WIDTH * 5,
-    width: HISTORY_BOX.BORDER_RADIUS * 0.8, // Bevel size based on border radius
-    height: HISTORY_BOX.BORDER_RADIUS * 0.8,
-    backgroundColor: '#1A1A1A', // Darker than inner border for bevel effect
-    borderBottomRightRadius: HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5),
-    zIndex: 1, // Above inner border, below content
+    // Position content area inside the inner border
+    top: BUTTON_BORDER.WIDTH * 5 + 2,
+    left: BUTTON_BORDER.WIDTH * 5 + 2,
+    right: BUTTON_BORDER.WIDTH * 5 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 5 + 2,
+    backgroundColor: COLORS.BACKGROUND_DARK, // Match calculator display background (#2C2C2C)
+    borderRadius: Math.max(2, HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2),
+    overflow: 'hidden' as const, // Clip content to border radius
+    zIndex: 1, // Above inner border, below text
   },
   historyBar: {
     flexDirection: 'row',
@@ -687,6 +697,9 @@ const styles = StyleSheet.create({
     paddingVertical: HISTORY_BOX.BAR_PADDING_VERTICAL,
     // Remove borderRadius, margin, and shadows for seamless calculator display appearance
     zIndex: 1, // Above inner border
+    // Ensure content doesn't extend beyond container bounds
+    maxWidth: '100%' as const,
+    overflow: 'hidden' as const,
   },
   historyBarLast: {
     // No special styling needed for last bar
@@ -696,6 +709,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'center',
     marginRight: SPACING.MARGIN_MEDIUM, // Increased gap between number and equation
+    flexShrink: 0, // Prevent shrinking
   },
   historyNumber: {
     fontSize: FONT_SIZES.HISTORY_TEXT * 1.28, // Increased font size to make numbers more distinct
@@ -731,8 +745,8 @@ const styles = StyleSheet.create({
   },
   libraryButtonContainer: {
     position: 'absolute',
-    bottom: SPACING.CONTAINER_PADDING_TOP + SCREEN_HEIGHT * 0.04, // Raised up by 4% of screen height
-    right: SPACING.CONTAINER_PADDING_HORIZONTAL, // Same gap from right as top buttons
+    bottom: SPACING.CONTAINER_PADDING_TOP + SCREEN_HEIGHT * 0.025, // Lowered by another 0.5% (was 0.03, now 0.025)
+    right: SPACING.CONTAINER_PADDING_HORIZONTAL, // Same right distance as settings button
     width: BUTTON_SIZES.NAV_ARROW_SIZE,
     height: BUTTON_SIZES.NAV_ARROW_SIZE,
     zIndex: 10,
