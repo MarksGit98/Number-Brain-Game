@@ -11,7 +11,6 @@ import LibraryButton from '../Components/LibraryButton';
 import SettingsButton from '../Components/SettingsButton';
 import PressableButton3D from '../Components/PressableButton3D';
 import { SCREEN_DIMENSIONS, FONT_SIZES, SPACING, CALCULATOR_DISPLAY, HISTORY_BOX, LEVEL_POSITION, CONTROLS, BORDER_RADIUS, SHADOW, LETTER_SPACING, BUTTON_SIZES, DIGIT_CONTAINER_POSITION, COLORS, FONT_WEIGHTS, SHADOW_OFFSETS, ELEVATION, ANIMATION, NUMERIC_CONSTANTS, BUTTON_BORDER, PADDING_VALUES } from '../constants/sizing';
-import { TEXT_SHADOW_BOLD_STRONG, TEXT_SHADOW_BOLD_MEDIUM, TEXT_SHADOW_BOLD_EXTRA } from '../constants/fonts';
 
 const SCREEN_WIDTH = SCREEN_DIMENSIONS.WIDTH;
 const SCREEN_HEIGHT = SCREEN_DIMENSIONS.HEIGHT;
@@ -41,6 +40,7 @@ interface GameScreenProps {
   animatedPosition: Animated.ValueXY;
   animatedScale: Animated.Value;
   animatedOpacity: Animated.Value;
+  bounceTranslateY: Animated.Value;
 }
 
 export default function GameScreen({
@@ -68,6 +68,7 @@ export default function GameScreen({
   animatedPosition,
   animatedScale,
   animatedOpacity,
+  bounceTranslateY,
 }: GameScreenProps) {
   const operations: Operation[] = ['+', '-', '*', '/'];
   const puzzles = getPuzzlesByDifficulty(difficulty);
@@ -100,7 +101,16 @@ export default function GameScreen({
         />
       </View>
       
-      <Text style={styles.title}>Number Brain</Text>
+      <View style={styles.titleContainer}>
+        {['D', 'I', 'G', 'I', 'T', 'L'].map((letter, i) => (
+          <React.Fragment key={i}>
+            <View style={styles.solarPanelCell}>
+              <Text style={styles.titleLetter}>{letter}</Text>
+            </View>
+            {i < 5 && <View style={styles.solarPanelDivider} />}
+          </React.Fragment>
+        ))}
+      </View>
       
       <View style={styles.gameContent}>
         {/* Level Number Container */}
@@ -125,6 +135,8 @@ export default function GameScreen({
           }}
         >
           <View style={styles.targetContainer}>
+            <View style={styles.targetInnerBorder} />
+            <View style={styles.targetBevel} />
             <Text style={styles.targetNumber}>{gameState.target}</Text>
           </View>
         </View>
@@ -134,8 +146,8 @@ export default function GameScreen({
           ref={digitContainerRef}
           style={styles.digitsContainerWrapper}
         >
-          {difficulty === 'medium' && gameState.digits.length === 5 ? (
-            // Medium puzzle with 5 tiles: 3 in first row, 2 in second row
+          {((difficulty === 'medium' || difficulty === 'hard') && gameState.digits.length === 5) ? (
+            // Medium or Hard puzzle with 5 tiles: 3 in first row, 2 in second row
             <View style={styles.digitsContainerMedium5}>
               <View style={styles.digitRow}>
                 {gameState.digits.slice(0, 3).map((digit, index) => {
@@ -163,6 +175,19 @@ export default function GameScreen({
                       isAnimating={isAnimatingThis}
                     />
                   );
+                  
+                  if (isAnimatingThis) {
+                    return (
+                      <Animated.View
+                        key={index}
+                        style={{
+                          transform: [{ translateY: bounceTranslateY }],
+                        }}
+                      >
+                        {digitButton}
+                      </Animated.View>
+                    );
+                  }
                   
                   if (isShakingThis) {
                     return (
@@ -207,6 +232,19 @@ export default function GameScreen({
                       isAnimating={isAnimatingThis}
                     />
                   );
+                  
+                  if (isAnimatingThis) {
+                    return (
+                      <Animated.View
+                        key={actualIndex}
+                        style={{
+                          transform: [{ translateY: bounceTranslateY }],
+                        }}
+                      >
+                        {digitButton}
+                      </Animated.View>
+                    );
+                  }
                   
                   if (isShakingThis) {
                     return (
@@ -254,6 +292,20 @@ export default function GameScreen({
                   />
                 );
                 
+                // Wrap in Animated.View to apply bounce animation when animating
+                if (isAnimatingThis) {
+                  return (
+                    <Animated.View
+                      key={index}
+                      style={{
+                        transform: [{ translateY: bounceTranslateY }],
+                      }}
+                    >
+                      {digitButton}
+                    </Animated.View>
+                  );
+                }
+                
                 // Wrap in Animated.View to apply shake animation when shaking
                 if (isShakingThis) {
                   return (
@@ -274,26 +326,6 @@ export default function GameScreen({
           )}
         </View>
       
-        {/* Animated tile that floats up and fades out */}
-        {isAnimating && animatingDigit !== null && (
-          <Animated.View
-            style={[
-              styles.animatedDigitContainer,
-              {
-                transform: [
-                  { translateX: animatedPosition.x },
-                  { translateY: animatedPosition.y },
-                ],
-                opacity: animatedOpacity,
-              },
-            ]}
-            pointerEvents="none"
-          >
-            <View style={styles.digitButton}>
-              <Text style={[styles.digitText, styles.animatedDigitText]}>{animatingDigit}</Text>
-            </View>
-          </Animated.View>
-        )}
 
         {/* Operation Buttons Container */}
         <View style={styles.operationsContainerWrapper}>
@@ -319,37 +351,46 @@ export default function GameScreen({
           <View style={[
             styles.historyContainer,
             {
-              minHeight: HISTORY_BOX.HEIGHT_ONE_LINE,
-              // Height calculation (HEIGHT_ONE_LINE includes title space, but title is removed)
-              // For 0 or 1 entries: use HEIGHT_ONE_LINE
-              // For 2+ entries: HEIGHT_ONE_LINE + (additional entries beyond first * bar height)
-              // Cap height at maximum turns for difficulty: Easy=3, Medium=4, Hard=5
-              // Maximum history entries = initial tile count - 1
-              height: (() => {
-                const maxEntries = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
-                const cappedHistoryLength = Math.min(gameState.history.length, maxEntries);
-                return cappedHistoryLength <= 1
-                  ? HISTORY_BOX.HEIGHT_ONE_LINE
-                  : HISTORY_BOX.HEIGHT_ONE_LINE + ((cappedHistoryLength - 1) * HISTORY_BOX.BAR_HEIGHT);
-              })(),
-              borderWidth: BUTTON_BORDER.WIDTH,
-              borderColor: gameState.history.length > 0 ? '#000000' : '#B0B0B0',
+              // Fixed height based on difficulty: Easy=3, Medium=4, Hard=5 lines
+              height: difficulty === 'easy' ? HISTORY_BOX.HEIGHT_EASY 
+                     : difficulty === 'medium' ? HISTORY_BOX.HEIGHT_MEDIUM 
+                     : HISTORY_BOX.HEIGHT_HARD,
             },
-            ]}>
-          {gameState.history.length > 0 ? (
-            gameState.history.map((entry, index) => (
-              <View key={index} style={[
-                styles.historyBar,
-                // Remove margin bottom on last bar to prevent extra space
-                index === gameState.history.length - 1 && styles.historyBarLast,
-              ]}>
-                <Text style={styles.historyNumber}>{index + 1})</Text>
-                <Text style={styles.historyText}>
-                  {entry.operands[0]} {entry.operation === '*' ? '×' : entry.operation === '/' ? '÷' : entry.operation} {entry.operands[1]} = {entry.result}
-                </Text>
-              </View>
-            ))
-          ) : null}
+          ]}>
+            <View style={styles.historyInnerBorder} />
+            <View style={styles.historyBevel} />
+            {(() => {
+              const maxEntries = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
+              const lines = [];
+              
+              // Always render all possible lines (gray if not filled, green if filled)
+              for (let i = 0; i < maxEntries; i++) {
+                const hasEntry = i < gameState.history.length;
+                const entry = hasEntry ? gameState.history[i] : undefined;
+                
+                lines.push(
+                  <View key={i} style={styles.historyBar}>
+                    <View style={styles.historyNumberContainer}>
+                      <Text style={[
+                        styles.historyNumber,
+                        !hasEntry && styles.historyNumberEmpty
+                      ]}>
+                        {i + 1})
+                      </Text>
+                    </View>
+                    {hasEntry && entry ? (
+                      <Text style={styles.historyText}>
+                        {entry.operands[0]} {entry.operation === '*' ? '×' : entry.operation === '/' ? '÷' : entry.operation} {entry.operands[1]} = {entry.result}
+                      </Text>
+                    ) : (
+                      <Text style={styles.historyTextEmpty} />
+                    )}
+                  </View>
+                );
+              }
+              
+              return lines;
+            })()}
           </View>
         </View>
 
@@ -373,12 +414,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.CONTAINER_PADDING_HORIZONTAL,
     paddingTop: SPACING.CONTAINER_PADDING_TOP,
   },
-  title: {
-    fontSize: FONT_SIZES.TITLE,
-    fontWeight: 'bold' as const,
-    color: COLORS.TEXT_PRIMARY,
+  titleContainer: {
+    backgroundColor: '#8B7355', // Light brown/tan color for solar panel (matching calculator aesthetic)
+    paddingVertical: SCREEN_HEIGHT * 0.003, // Reduced vertical padding
+    paddingHorizontal: SCREEN_WIDTH * 0.02, // Reduced horizontal padding for smaller width
+    borderRadius: SCREEN_HEIGHT * 0.006,
+    marginTop: SCREEN_HEIGHT * 0.01,
     marginBottom: SPACING.MARGIN_MEDIUM,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: SCREEN_HEIGHT * 0.035, // Fixed smaller height
+    width: SCREEN_WIDTH * 0.4, // Scaled down to fit between top circles
+    alignSelf: 'center', // Center horizontally
+    // Create rectangular solar panel cells
+    overflow: 'hidden',
+  },
+  solarPanelCell: {
+    flex: 1,
+    height: '100%',
+    backgroundColor: '#6B5D4F', // Darker brown for individual solar panel cells
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  solarPanelDivider: {
+    width: 2,
+    height: '100%',
+    backgroundColor: '#8B7355', // Same as container background for vertical bar
+  },
+  titleLetter: {
+    fontSize: FONT_SIZES.TITLE,
+    fontFamily: 'Digital-7-Mono',
+    color: COLORS.BACKGROUND_DARK, // Same color as calculator display background
     textAlign: 'center',
+    // Text shadow for thickness (Digital-7-Mono doesn't support bold)
+    textShadowColor: COLORS.BACKGROUND_DARK,
+    textShadowOffset: { width: 1.5, height: 1.5 },
+    textShadowRadius: 2,
   },
   homeButtonContainer: {
     position: 'absolute',
@@ -411,12 +483,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: COLORS.BACKGROUND_DARK,
     paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL,
-    paddingVertical: CALCULATOR_DISPLAY.PADDING_VERTICAL,
+    paddingTop: CALCULATOR_DISPLAY.PADDING_VERTICAL,
+    paddingBottom: CALCULATOR_DISPLAY.PADDING_VERTICAL,
     borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS,
     width: CALCULATOR_DISPLAY.WIDTH,
     height: CALCULATOR_DISPLAY.HEIGHT,
-    borderWidth: BUTTON_BORDER.WIDTH * 2, // Thin-moderate border (2x the standard thin border)
-    borderColor: BUTTON_BORDER.COLOR,
+    // Metallic border effect with glisten - top/left highlights, bottom/right shadows for embossed depth
+    // Top border is brightest (direct light), left is slightly dimmer (indirect light) for realistic corner depth
+    borderTopColor: '#B0B0B0', // Brightest metallic gray (top highlight - direct light source)
+    borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
+    borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
+    borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
+    borderTopWidth: BUTTON_BORDER.WIDTH * 5, // Increased border size
+    borderLeftWidth: BUTTON_BORDER.WIDTH * 5,
+    borderRightWidth: BUTTON_BORDER.WIDTH * 5,
+    borderBottomWidth: BUTTON_BORDER.WIDTH * 5,
+    // Subtle glisten effect with shadow
+    shadowColor: '#A0A0A0',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
+    display: 'flex', // Ensure flex layout
+  },
+  targetInnerBorder: {
+    position: 'absolute',
+    top: BUTTON_BORDER.WIDTH * 5 + 2, // Outer border width + small gap
+    left: BUTTON_BORDER.WIDTH * 5 + 2,
+    right: BUTTON_BORDER.WIDTH * 5 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 5 + 2,
+    backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
+    borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2,
+    zIndex: 0, // Behind text
   },
   targetNumber: {
     fontSize: FONT_SIZES.TARGET_NUMBER,
@@ -426,11 +524,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,
-    lineHeight: FONT_SIZES.TARGET_NUMBER,
+    lineHeight: FONT_SIZES.TARGET_NUMBER * 0.95, // Slightly reduced to account for font metrics
     // Enhanced shadow for 3D pop effect
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 3,
+    zIndex: 1, // Above inner border
   },
   digitsContainerWrapper: {
     width: '100%' as const,
@@ -534,53 +633,93 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   historyContainer: {
-    backgroundColor: '#fff',
-    padding: HISTORY_BOX.PADDING, // Equal padding on all sides
+    backgroundColor: COLORS.BACKGROUND_DARK, // Same background as calculator display
+    paddingHorizontal: HISTORY_BOX.PADDING_HORIZONTAL, // Horizontal padding (left/right)
+    paddingVertical: HISTORY_BOX.PADDING_VERTICAL, // Equal vertical padding (top and bottom)
     borderRadius: HISTORY_BOX.BORDER_RADIUS,
-    width: HISTORY_BOX.WIDTH,
+    width: CALCULATOR_DISPLAY.WIDTH, // Match target display box width
     maxWidth: HISTORY_BOX.MAX_WIDTH,
-    shadowColor: '#000',
-    shadowOffset: SHADOW.OFFSET_SMALL,
-    shadowOpacity: SHADOW.OPACITY_LIGHT,
-    shadowRadius: SHADOW.RADIUS_MEDIUM,
-    elevation: 2,
+    // Metallic border effect with glisten - same as calculator display
+    // Top border is brightest (direct light), left is slightly dimmer (indirect light) for realistic corner depth
+    borderTopColor: '#B0B0B0', // Brightest metallic gray (top highlight - direct light source)
+    borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
+    borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
+    borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
+    borderTopWidth: BUTTON_BORDER.WIDTH * 5, // Increased border size
+    borderLeftWidth: BUTTON_BORDER.WIDTH * 5,
+    borderRightWidth: BUTTON_BORDER.WIDTH * 5,
+    borderBottomWidth: BUTTON_BORDER.WIDTH * 5,
+    // Subtle glisten effect with shadow (scaled down)
+    shadowColor: '#A0A0A0',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 1.5,
+    elevation: 1.5,
     overflow: 'hidden',
-    alignSelf: 'flex-start',
+    alignSelf: 'center', // Center horizontally like other calculator displays
+    justifyContent: 'center', // Center content vertically
+  },
+  historyInnerBorder: {
+    position: 'absolute',
+    top: BUTTON_BORDER.WIDTH * 5 + 2, // Outer border width + small gap
+    left: BUTTON_BORDER.WIDTH * 5 + 2,
+    right: BUTTON_BORDER.WIDTH * 5 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 5 + 2,
+    backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
+    borderRadius: HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2,
+    zIndex: 0, // Behind bevel and content
+  },
+  historyBevel: {
+    position: 'absolute',
+    bottom: BUTTON_BORDER.WIDTH * 5,
+    right: BUTTON_BORDER.WIDTH * 5,
+    width: HISTORY_BOX.BORDER_RADIUS * 0.8, // Bevel size based on border radius
+    height: HISTORY_BOX.BORDER_RADIUS * 0.8,
+    backgroundColor: '#1A1A1A', // Darker than inner border for bevel effect
+    borderBottomRightRadius: HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5),
+    zIndex: 1, // Above inner border, below content
   },
   historyBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.BACKGROUND_DARK,
-    paddingHorizontal: HISTORY_BOX.BAR_PADDING_HORIZONTAL,
+    backgroundColor: COLORS.BACKGROUND_DARK, // Same as container for seamless appearance
+    paddingHorizontal: 0, // Remove horizontal padding to prevent overflow - padding handled by container
     paddingVertical: HISTORY_BOX.BAR_PADDING_VERTICAL,
-    borderRadius: HISTORY_BOX.BAR_BORDER_RADIUS,
-    marginBottom: HISTORY_BOX.BAR_MARGIN_BOTTOM,
-    shadowColor: '#000',
-    shadowOffset: SHADOW.OFFSET_SMALL,
-    shadowOpacity: SHADOW.OPACITY_FULL,
-    shadowRadius: 0,
-    elevation: 0,
+    // Remove borderRadius, margin, and shadows for seamless calculator display appearance
+    zIndex: 1, // Above inner border
   },
   historyBarLast: {
-    marginBottom: 0, // Remove margin on last bar
+    // No special styling needed for last bar
+  },
+  historyNumberContainer: {
+    width: SCREEN_WIDTH * 0.06, // Fixed width column for right-aligned numbers
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginRight: SPACING.MARGIN_MEDIUM, // Increased gap between number and equation
   },
   historyNumber: {
-    fontSize: FONT_SIZES.HISTORY_TEXT * 1.06, // Marginally increased
-    color: COLORS.TEXT_SUCCESS,
+    fontSize: FONT_SIZES.HISTORY_TEXT * 1.28, // Increased font size to make numbers more distinct
+    color: COLORS.TEXT_SUCCESS, // Green when filled
     fontFamily: 'Digital-7-Mono',
-    ...TEXT_SHADOW_BOLD_EXTRA, // Extra bold for numbers (bolder than history text)
     letterSpacing: LETTER_SPACING.TIGHT,
-    marginRight: SPACING.MARGIN_SMALL,
+    textAlign: 'right',
+  },
+  historyNumberEmpty: {
+    color: '#3A3A3A', // Lighter version of background (#2C2C2C) - looks like an imprint on calculator screen
   },
   historyText: {
-    fontSize: FONT_SIZES.HISTORY_TEXT * 1.06, // Marginally increased
+    fontSize: FONT_SIZES.HISTORY_TEXT * 1.10, // Slightly increased font size
     color: COLORS.TEXT_SUCCESS,
     fontFamily: 'Digital-7-Mono',
-    ...TEXT_SHADOW_BOLD_MEDIUM, // Use text shadow for bold effect (fontWeight doesn't work with Digital-7 Mono)
     letterSpacing: LETTER_SPACING.TIGHT,
+    flex: 1,
   },
-  historyPlaceholder: {
-    height: SPACING.MARGIN_MEDIUM,
+  historyTextEmpty: {
+    fontSize: FONT_SIZES.HISTORY_TEXT * 1.10,
+    color: 'transparent', // Invisible but maintains line height
+    fontFamily: 'Digital-7-Mono',
+    letterSpacing: LETTER_SPACING.TIGHT,
+    flex: 1,
   },
   settingsButtonContainer: {
     position: 'absolute',
@@ -592,7 +731,7 @@ const styles = StyleSheet.create({
   },
   libraryButtonContainer: {
     position: 'absolute',
-    bottom: SPACING.CONTAINER_PADDING_TOP, // Same gap from bottom as top buttons have from top
+    bottom: SPACING.CONTAINER_PADDING_TOP + SCREEN_HEIGHT * 0.04, // Raised up by 4% of screen height
     right: SPACING.CONTAINER_PADDING_HORIZONTAL, // Same gap from right as top buttons
     width: BUTTON_SIZES.NAV_ARROW_SIZE,
     height: BUTTON_SIZES.NAV_ARROW_SIZE,
@@ -704,11 +843,10 @@ const styles = StyleSheet.create({
     color: '#9E9E9E',
   },
   levelNumber: {
-    fontSize: FONT_SIZES.LEVEL_NUMBER,
-    fontWeight: 'normal',
-    color: '#666',
-    textAlign: 'center',
+    fontSize: FONT_SIZES.HISTORY_TEXT * 1.5,
+    color: COLORS.TEXT_TERTIARY, // Gray color for original simple display
     fontFamily: 'Digital-7-Mono',
+    textAlign: 'center',
   },
   successBannerOverlay: {
     position: 'absolute',

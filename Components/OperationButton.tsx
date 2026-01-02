@@ -1,6 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import { TouchableOpacity, StyleSheet, Animated, Text, ViewStyle, TextStyle } from 'react-native';
+import { TouchableOpacity, StyleSheet, Animated, Text, View, ViewStyle, TextStyle } from 'react-native';
 import { BUTTON_SIZES, FONT_SIZES, SHADOW, BUTTON_BORDER, ANIMATION, COLORS, SHADOW_OFFSETS, NUMERIC_CONSTANTS, ELEVATION, PADDING_VALUES } from '../constants/sizing';
+import { Dimensions } from 'react-native';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface OperationButtonProps {
   operation: string;
@@ -77,10 +80,10 @@ export default function OperationButton({
         >
           <Text style={[
             styles.text,
-            (operation === '+' || operation === '-') && styles.textLarger,
+            operation === '+' && styles.textPlus, // Special centering for plus symbol
             textStyle
           ]}>
-            {operation === '*' ? '×' : operation === '/' ? '÷' : operation}
+            {operation === '*' ? '×' : operation === '/' ? '÷' : operation === '+' ? '＋' : operation === '-' ? '−' : operation}
           </Text>
         </TouchableOpacity>
       </Animated.View>
@@ -118,19 +121,18 @@ const styles = StyleSheet.create({
     opacity: ANIMATION.OPACITY_DISABLED,
   },
   text: {
-    fontSize: FONT_SIZES.OPERATION_SYMBOL * NUMERIC_CONSTANTS.FONT_MULTIPLIER_FULL, // Scaled up to full size
-    fontWeight: 'normal' as const,
+    fontSize: FONT_SIZES.OPERATION_SYMBOL * NUMERIC_CONSTANTS.FONT_MULTIPLIER_FULL,
+    fontWeight: '900' as const, // Extra bold for bolder appearance
     color: COLORS.TEXT_WHITE,
     fontFamily: 'Digital-7-Mono',
     textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,
-    lineHeight: FONT_SIZES.OPERATION_SYMBOL * NUMERIC_CONSTANTS.FONT_MULTIPLIER_FULL, // Match fontSize for perfect centering
+    lineHeight: FONT_SIZES.OPERATION_SYMBOL * NUMERIC_CONSTANTS.FONT_MULTIPLIER_FULL,
   },
-  textLarger: {
-    fontSize: FONT_SIZES.OPERATION_SYMBOL * 1.5, // 50% larger for + and - symbols
-    lineHeight: FONT_SIZES.OPERATION_SYMBOL * 1.5, // Match fontSize for perfect centering
-    marginTop: -(FONT_SIZES.OPERATION_SYMBOL * 0.1), // Upward adjustment to center + and - symbols vertically
+  textPlus: {
+    // Offset the plus symbol lower so it appears centered (scaled by screen height)
+    transform: [{ translateY: SCREEN_HEIGHT * 0.008 }], // Offset down based on screen height for proper scaling
   },
 });
 

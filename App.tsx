@@ -3,7 +3,10 @@ import { View, Alert, Animated } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Operation, Difficulty, GameState, Puzzle } from './types';
 import { getRandomPuzzle, getPuzzlesByDifficulty, getPuzzleByIndex, getPuzzleKey, performOperation, AFFIRMATIONS } from './utils';
-import { saveCompletedPuzzles, loadCompletedPuzzles, saveLastPlayedLevel } from './utils/storage';
+import { saveCompletedPuzzles, loadCompletedPuzzles, saveLastPlayedLevel, loadLastPlayedLevel, saveMusicEnabled, loadMusicEnabled, saveSoundEffectsEnabled, loadSoundEffectsEnabled, saveAdsEnabled, loadAdsEnabled, saveAdFree, loadAdFree } from './utils/storage';
+import { adManager } from './utils/adManager';
+import BannerAdComponent from './Components/BannerAdComponent';
+import SampleBannerAd from './Components/SampleBannerAd';
 import MainMenuScreen from './Screens/MainMenuScreen';
 import GameScreen from './Screens/GameScreen';
 import LevelLibraryScreen from './Screens/LevelLibraryScreen';
@@ -35,36 +38,58 @@ export default function App() {
   const animatedScale = useRef(new Animated.Value(1)).current;
   const animatedOpacity = useRef(new Animated.Value(1)).current;
   const shakeTranslateX = useRef(new Animated.Value(0)).current;
+  const bounceTranslateY = useRef(new Animated.Value(0)).current;
   const targetPositionRef = useRef<{ x: number; y: number } | null>(null);
   const digitPositionRef = useRef<{ x: number; y: number } | null>(null);
   const targetContainerRef = useRef<View>(null);
   const digitContainerRef = useRef<View>(null);
   const animatingDigitButtonRef = useRef<any>(null);
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set());
-  const [libraryTab, setLibraryTab] = useState<Difficulty>('easy');
+  // Remove separate libraryTab state - use selectedDifficulty instead
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHowToPlayModal, setShowHowToPlayModal] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
+  const [adsEnabled, setAdsEnabled] = useState(true);
+  const [isAdFree, setIsAdFree] = useState(false);
   const [isLoadingSavedData, setIsLoadingSavedData] = useState(true);
 
   // Load saved data and initialize sounds on app start
   useEffect(() => {
     const loadSavedData = async () => {
       try {
+        // Load user preferences
+        const savedMusicEnabled = await loadMusicEnabled();
+        const savedSoundEffectsEnabled = await loadSoundEffectsEnabled();
+        const savedAdsEnabled = await loadAdsEnabled();
+        const savedAdFree = await loadAdFree();
+        setMusicEnabled(savedMusicEnabled);
+        setSoundEffectsEnabled(savedSoundEffectsEnabled);
+        setAdsEnabled(savedAdsEnabled);
+        setIsAdFree(savedAdFree);
+
         // Initialize sound manager
         await soundManager.initialize();
         await soundManager.loadAllSounds();
+        
+        // Set music and sound effects state
+        await soundManager.setMusicEnabled(savedMusicEnabled);
+        soundManager.setSoundEnabled(savedSoundEffectsEnabled);
+
+        // Initialize AdMob
+        await adManager.initialize();
+        adManager.setAdsEnabled(savedAdsEnabled);
+        adManager.setAdFree(savedAdFree);
 
         // Load completed puzzles
         const savedCompletedPuzzles = await loadCompletedPuzzles();
         setCompletedPuzzles(savedCompletedPuzzles);
 
-        // Load last played level (optional - you can restore this if desired)
-        // const lastPlayed = await loadLastPlayedLevel();
-        // if (lastPlayed.difficulty && lastPlayed.index !== null) {
-        //   // Optionally restore the last played level
-        // }
+        // Load last played difficulty to set initial selected difficulty
+        const lastPlayed = await loadLastPlayedLevel();
+        if (lastPlayed.difficulty) {
+          setSelectedDifficulty(lastPlayed.difficulty);
+        }
       } catch (error) {
         console.warn('Failed to load saved data:', error);
       } finally {
@@ -73,7 +98,8 @@ export default function App() {
     };
 
     loadSavedData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // Save completed puzzles whenever they change
   useEffect(() => {
@@ -204,6 +230,11 @@ export default function App() {
   const openLevelLibrary = () => {
     setShowLevelLibrary(true);
     setShowMenu(false);
+    // Library tab will use selectedDifficulty, which is already synchronized
+  };
+  
+  const handleLibraryTabChange = (tab: Difficulty) => {
+    setSelectedDifficulty(tab); // Synchronize library tab with home screen difficulty
   };
 
   const closeLevelLibrary = () => {
@@ -237,19 +268,33 @@ export default function App() {
     return null; // Show loading state while fonts load
   }
 
-  const handleMusicToggle = (enabled: boolean) => {
+  const handleMusicToggle = async (enabled: boolean) => {
     setMusicEnabled(enabled);
-    // TODO: Integrate with music player when implemented
+    await soundManager.setMusicEnabled(enabled);
+    await saveMusicEnabled(enabled);
   };
 
-  const handleSoundEffectsToggle = (enabled: boolean) => {
+  const handleSoundEffectsToggle = async (enabled: boolean) => {
     setSoundEffectsEnabled(enabled);
     soundManager.setSoundEnabled(enabled);
+    await saveSoundEffectsEnabled(enabled);
   };
 
-  const handlePurchaseAdFree = () => {
-    Alert.alert('Ad-Free Version', 'This feature will be available soon!');
-    // TODO: Implement ad-free purchase logic
+  const handleAdsToggle = async (enabled: boolean) => {
+    setAdsEnabled(enabled);
+    adManager.setAdsEnabled(enabled);
+    await saveAdsEnabled(enabled);
+  };
+
+  const handlePurchaseAdFree = async () => {
+    // TODO: Implement actual in-app purchase logic here
+    // For now, simulate purchase
+    setIsAdFree(true);
+    setAdsEnabled(false);
+    adManager.setAdFree(true);
+    await saveAdFree(true);
+    await saveAdsEnabled(false);
+    Alert.alert('Ad-Free Version', 'Thank you for your purchase! Ads have been disabled.');
   };
 
   const handlePrivacyPolicyPress = () => {
@@ -261,27 +306,32 @@ export default function App() {
     return (
       <>
         <LevelLibraryScreen
-          libraryTab={libraryTab}
-          onTabChange={setLibraryTab}
+          libraryTab={selectedDifficulty}
+          onTabChange={handleLibraryTabChange}
           onClose={closeLevelLibrary}
           onReturnToMenu={returnToMenu}
           onSelectPuzzle={handleSelectPuzzle}
           completedPuzzles={completedPuzzles}
           onOpenSettings={() => setShowSettingsModal(true)}
         />
-        <SettingsModal
-          visible={showSettingsModal}
-          onClose={() => setShowSettingsModal(false)}
-          musicEnabled={musicEnabled}
-          soundEffectsEnabled={soundEffectsEnabled}
-          onMusicToggle={handleMusicToggle}
-          onSoundEffectsToggle={handleSoundEffectsToggle}
-          onPurchaseAdFree={handlePurchaseAdFree}
-          onPrivacyPolicyPress={handlePrivacyPolicyPress}
-        />
-      </>
-    );
-  }
+      <SettingsModal
+        visible={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        musicEnabled={musicEnabled}
+        soundEffectsEnabled={soundEffectsEnabled}
+        adsEnabled={adsEnabled}
+        isAdFree={isAdFree}
+        onMusicToggle={handleMusicToggle}
+        onSoundEffectsToggle={handleSoundEffectsToggle}
+        onAdsToggle={handleAdsToggle}
+        onPurchaseAdFree={handlePurchaseAdFree}
+        onPrivacyPolicyPress={handlePrivacyPolicyPress}
+      />
+      <BannerAdComponent enabled={adsEnabled && !isAdFree} />
+      <SampleBannerAd />
+    </>
+  );
+}
 
   if (showMenu || !gameState) {
     return (
@@ -299,8 +349,11 @@ export default function App() {
           onClose={() => setShowSettingsModal(false)}
           musicEnabled={musicEnabled}
           soundEffectsEnabled={soundEffectsEnabled}
+          adsEnabled={adsEnabled}
+          isAdFree={isAdFree}
           onMusicToggle={handleMusicToggle}
           onSoundEffectsToggle={handleSoundEffectsToggle}
+          onAdsToggle={handleAdsToggle}
           onPurchaseAdFree={handlePurchaseAdFree}
           onPrivacyPolicyPress={handlePrivacyPolicyPress}
         />
@@ -526,62 +579,60 @@ export default function App() {
       setTimeout(() => {
         setIsAnimating(true);
         setAnimatingDigit(newDigits[0]);
+        bounceTranslateY.setValue(0);
         
-        // Measure digit position to start animation from
-        const measureDigitPosition = () => {
-          if (animatingDigitButtonRef.current) {
-            animatingDigitButtonRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-              const startX = pageX + width / 2 - 37.5;
-              const startY = pageY + height / 2 - 37.5;
-              
-              // Validate position is reasonable
-              if (startX <= 0 || startY <= 0) {
-                // Fallback: skip animation and show banner directly
-                handleAnimationComplete();
-                return;
-              }
-              
-              // Set initial position
-              animatedPosition.setValue({ x: startX, y: startY });
-              animatedOpacity.setValue(1);
-              
-              // Animate: float up to top of screen and fade out
-              Animated.parallel([
-                Animated.timing(animatedPosition, {
-                  toValue: { x: startX, y: -SCREEN_DIMENSIONS.HEIGHT },
-                  duration: 1000,
-                  useNativeDriver: true,
-                }),
-                Animated.timing(animatedOpacity, {
-                  toValue: 0,
-                  duration: 1000,
-                  useNativeDriver: true,
-                }),
-              ]).start(() => {
-                handleAnimationComplete();
-              });
-            });
-          } else {
-            // Retry if ref not ready
-            setTimeout(measureDigitPosition, 50);
-          }
-        };
+        // Create bounce animation (up and down, similar to shake but vertical)
+        // Each bounce cycle: up, down, up, down, center (total ~275ms)
+        // Repeat 2 times for ~0.55 second
+        const singleBounce = Animated.sequence([
+          Animated.timing(bounceTranslateY, {
+            toValue: -6, // Move up
+            duration: 55,
+            useNativeDriver: true,
+          }),
+          Animated.timing(bounceTranslateY, {
+            toValue: 6, // Move down
+            duration: 55,
+            useNativeDriver: true,
+          }),
+          Animated.timing(bounceTranslateY, {
+            toValue: -6, // Move up
+            duration: 55,
+            useNativeDriver: true,
+          }),
+          Animated.timing(bounceTranslateY, {
+            toValue: 6, // Move down
+            duration: 55,
+            useNativeDriver: true,
+          }),
+          Animated.timing(bounceTranslateY, {
+            toValue: 0, // Return to center
+            duration: 55,
+            useNativeDriver: true,
+          }),
+        ]);
         
-        const handleAnimationComplete = () => {
+        Animated.sequence([
+          singleBounce,
+          singleBounce,
+        ]).start(() => {
           // Mark puzzle as completed and show success banner
+          setIsAnimating(false);
+          setAnimatingDigit(null);
+          bounceTranslateY.setValue(0);
+          
           if (difficulty && currentPuzzleIndex !== null) {
             const puzzleKey = getPuzzleKey(difficulty, currentPuzzleIndex);
             setCompletedPuzzles(prev => new Set([...prev, puzzleKey]));
+            
+            // Show interstitial ad every 3 solved puzzles
+            adManager.showInterstitial();
           }
-          setIsAnimating(false);
-          setAnimatingDigit(null);
+          
           const randomAffirmation = AFFIRMATIONS[Math.floor(Math.random() * AFFIRMATIONS.length)];
           setSuccessMessage(randomAffirmation);
           setShowSuccessBanner(true);
-        };
-        
-        // Start measuring position
-        setTimeout(measureDigitPosition, 100);
+        });
       }, 500);
     }
 
@@ -831,16 +882,23 @@ export default function App() {
         animatedPosition={animatedPosition}
         animatedScale={animatedScale}
         animatedOpacity={animatedOpacity}
+        bounceTranslateY={bounceTranslateY}
       />
       <SettingsModal
         visible={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         musicEnabled={musicEnabled}
         soundEffectsEnabled={soundEffectsEnabled}
+        adsEnabled={adsEnabled}
+        isAdFree={isAdFree}
         onMusicToggle={handleMusicToggle}
         onSoundEffectsToggle={handleSoundEffectsToggle}
+        onAdsToggle={handleAdsToggle}
         onPurchaseAdFree={handlePurchaseAdFree}
+        onPrivacyPolicyPress={handlePrivacyPolicyPress}
       />
+      <BannerAdComponent enabled={adsEnabled && !isAdFree} />
+      <SampleBannerAd />
     </>
   );
 }

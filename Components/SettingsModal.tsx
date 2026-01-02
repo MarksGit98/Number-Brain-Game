@@ -8,8 +8,11 @@ interface SettingsModalProps {
   onClose: () => void;
   musicEnabled: boolean;
   soundEffectsEnabled: boolean;
+  adsEnabled: boolean;
+  isAdFree: boolean;
   onMusicToggle: (enabled: boolean) => void;
   onSoundEffectsToggle: (enabled: boolean) => void;
+  onAdsToggle: (enabled: boolean) => void;
   onPurchaseAdFree: () => void;
   onPrivacyPolicyPress?: () => void;
 }
@@ -113,8 +116,11 @@ export default function SettingsModal({
   onClose,
   musicEnabled,
   soundEffectsEnabled,
+  adsEnabled,
+  isAdFree,
   onMusicToggle,
   onSoundEffectsToggle,
+  onAdsToggle,
   onPurchaseAdFree,
   onPrivacyPolicyPress,
 }: SettingsModalProps) {
@@ -183,19 +189,41 @@ export default function SettingsModal({
                 </TouchableOpacity>
               </View>
 
-              {/* Privacy Policy Link */}
-              {onPrivacyPolicyPress && (
-                <TouchableOpacity
-                  onPress={() => {
-                    soundManager.playSound('buttonPress');
-                    onPrivacyPolicyPress();
-                  }}
-                  style={styles.privacyPolicyLink}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.privacyPolicyLinkText}>Privacy Policy</Text>
-                </TouchableOpacity>
+              {/* Ads Toggle (only show if not ad-free) */}
+              {!isAdFree && (
+                <View style={styles.settingRow}>
+                  <Text style={styles.settingLabel}>Ads</Text>
+                  <TouchableOpacity
+                    style={[styles.toggle, adsEnabled && styles.toggleActive]}
+                    onPress={() => {
+                      soundManager.playSound('buttonPress');
+                      onAdsToggle(!adsEnabled);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View 
+                      style={[
+                        styles.toggleThumb, 
+                        { alignSelf: adsEnabled ? 'flex-end' : 'flex-start' }
+                      ]} 
+                    />
+                  </TouchableOpacity>
+                </View>
               )}
+
+              {/* Privacy Policy Link */}
+              <TouchableOpacity
+                onPress={() => {
+                  soundManager.playSound('buttonPress');
+                  if (onPrivacyPolicyPress) {
+                    onPrivacyPolicyPress();
+                  }
+                }}
+                style={styles.privacyPolicyLink}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.privacyPolicyLinkText}>Privacy Policy</Text>
+              </TouchableOpacity>
 
               {/* Ad-Free Purchase Button */}
               <ButtonWithAnimation
@@ -322,20 +350,23 @@ const styles = StyleSheet.create({
     // Margin handled by parent if needed
   },
   closeButtonText: {
-    color: COLORS.TEXT_TERTIARY,
+    color: '#000000', // Black font instead of gray
     fontSize: FONT_SIZES.BUTTON_TEXT,
     fontWeight: '500' as const,
   },
   privacyPolicyLink: {
     paddingVertical: SPACING.PADDING_SMALL,
+    paddingHorizontal: SPACING.PADDING_MEDIUM,
     marginBottom: SPACING.MARGIN_SMALL,
     alignItems: 'center' as const,
+    backgroundColor: COLORS.SHADOW_BLACK, // Black background
+    borderRadius: BORDER_RADIUS.SMALL,
   },
   privacyPolicyLinkText: {
-    color: COLORS.BUTTON_BLUE,
+    color: COLORS.BACKGROUND_WHITE, // White font
     fontSize: FONT_SIZES.BUTTON_TEXT,
     fontWeight: '500' as const,
-    textDecorationLine: 'underline' as const,
+    textDecorationLine: 'none' as const, // Remove underline
   },
 });
 

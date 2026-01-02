@@ -255,21 +255,38 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: SPACING.CONTAINER_PADDING_HORIZONTAL,
-    paddingTop: SPACING.CONTAINER_PADDING_TOP * 0.5,
-    paddingBottom: SPACING.MARGIN_MEDIUM,
+    paddingTop: SPACING.CONTAINER_PADDING_TOP * 0.4, // Reduced from 0.5
+    paddingBottom: SPACING.MARGIN_MEDIUM, // Increased from MARGIN_SMALL to create more gap
   },
   libraryTitleContainer: {
-    width: CALCULATOR_DISPLAY.WIDTH * 0.7, // Scaled down to 70% of PlayButton width
-    height: CALCULATOR_DISPLAY.HEIGHT * 0.5, // Scaled down to 50% of PlayButton height
+    width: CALCULATOR_DISPLAY.WIDTH * 0.68, // Scaled down to 70% of PlayButton width
+    height: CALCULATOR_DISPLAY.HEIGHT * 0.44, // Scaled down to 50% of PlayButton height
     borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS,
     backgroundColor: COLORS.BACKGROUND_DARK,
-    paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL * 0.7,
-    paddingVertical: CALCULATOR_DISPLAY.PADDING_VERTICAL * 0.5,
-    borderWidth: BUTTON_BORDER.WIDTH * 2,
-    borderColor: BUTTON_BORDER.COLOR,
+    paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL * 0.5, // Reduced from 0.7
+    paddingTop: CALCULATOR_DISPLAY.PADDING_VERTICAL * 0.2, // Reduced vertical padding for less gap
+    paddingBottom: CALCULATOR_DISPLAY.PADDING_VERTICAL * 0.2, // Reduced vertical padding for less gap
+    // Metallic border effect with glisten - scaled appropriately for smaller display
+    // Top border is brightest (direct light), left is slightly dimmer (indirect light) for realistic corner depth
+    borderTopColor: '#B0B0B0', // Brightest metallic gray (top highlight - direct light source)
+    borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
+    borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
+    borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
+    borderTopWidth: BUTTON_BORDER.WIDTH * 2.5, // Scaled border width for smaller display
+    borderLeftWidth: BUTTON_BORDER.WIDTH * 2.5,
+    borderRightWidth: BUTTON_BORDER.WIDTH * 2.5,
+    borderBottomWidth: BUTTON_BORDER.WIDTH * 2.5,
+    // Subtle glisten effect with shadow (scaled down)
+    shadowColor: '#A0A0A0',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 1.5,
+    elevation: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
+    display: 'flex', // Ensure flex layout
+    marginTop: -SCREEN_DIMENSIONS.HEIGHT * 0.01, // Raise slightly up without affecting other elements
   },
   libraryTitle: {
     fontSize: FONT_SIZES.TARGET_NUMBER * 0.35, // Scaled down to 35% of PlayButton font size
@@ -279,7 +296,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,
-    lineHeight: FONT_SIZES.TARGET_NUMBER * 0.35,
+    lineHeight: FONT_SIZES.TARGET_NUMBER * 0.35, // Match fontSize for perfect vertical centering
     // Enhanced shadow for 3D pop effect (matching targetNumber in GameScreen)
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 2, height: 2 },
@@ -328,7 +345,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   difficultyLabelButtonText: {
-    fontSize: FONT_SIZES.DIFFICULTY_BUTTON * 0.9, // Slightly smaller to fit "Medium" on one line
+    fontSize: FONT_SIZES.DIFFICULTY_BUTTON * 1.05, // Increased font size
     fontWeight: 'bold' as const,
     color: COLORS.TEXT_WHITE,
     textAlign: 'center',
@@ -377,7 +394,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingBottom: SPACING.MARGIN_MEDIUM,
-    justifyContent: 'flex-start',
+    justifyContent: 'center', // Center the tiles
     alignItems: 'flex-start',
     width: '100%',
   },

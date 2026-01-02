@@ -22,10 +22,13 @@ interface SoundConfig {
 
 class SoundManager {
   private sounds: Map<SoundType, Audio.Sound> = new Map();
+  private backgroundMusic: Audio.Sound | null = null;
   private config: SoundConfig = {
     volume: 0.7,
     shouldPlay: true,
   };
+  private musicEnabled: boolean = true;
+  private musicVolume: number = 0.3; // Lower volume for background music
 
   /**
    * Initialize the sound manager
@@ -65,9 +68,83 @@ class SoundManager {
       await this.loadSound('buttonRelease', require('../assets/sounds/button-release.wav'));
       await this.loadSound('errorClick', require('../assets/sounds/error-click.wav'));
       await this.loadSound('puzzleComplete', require('../assets/sounds/success.wav'));
+      await this.loadBackgroundMusic();
     } catch (error) {
       console.warn('Failed to load some sounds:', error);
     }
+  }
+
+  /**
+   * Load background music
+   */
+  async loadBackgroundMusic(): Promise<void> {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require('../assets/sounds/background-music.mp3'),
+        { 
+          shouldPlay: false, 
+          volume: this.musicVolume,
+          isLooping: true, // Loop the background music
+        }
+      );
+      this.backgroundMusic = sound;
+      // Don't start playing here - let setMusicEnabled handle it after loading
+    } catch (error) {
+      console.warn('Failed to load background music:', error);
+    }
+  }
+
+  /**
+   * Play background music
+   */
+  async playBackgroundMusic(): Promise<void> {
+    if (!this.musicEnabled || !this.backgroundMusic) {
+      return;
+    }
+
+    try {
+      const status = await this.backgroundMusic.getStatusAsync();
+      if (!status.isLoaded || !status.isPlaying) {
+        await this.backgroundMusic.playAsync();
+      }
+    } catch (error) {
+      console.warn('Failed to play background music:', error);
+    }
+  }
+
+  /**
+   * Stop background music
+   */
+  async stopBackgroundMusic(): Promise<void> {
+    if (!this.backgroundMusic) {
+      return;
+    }
+
+    try {
+      await this.backgroundMusic.pauseAsync();
+    } catch (error) {
+      console.warn('Failed to stop background music:', error);
+    }
+  }
+
+  /**
+   * Set music enabled/disabled
+   */
+  async setMusicEnabled(enabled: boolean): Promise<void> {
+    this.musicEnabled = enabled;
+    
+    if (enabled) {
+      await this.playBackgroundMusic();
+    } else {
+      await this.stopBackgroundMusic();
+    }
+  }
+
+  /**
+   * Check if music is enabled
+   */
+  isMusicEnabled(): boolean {
+    return this.musicEnabled;
   }
 
   /**
@@ -147,6 +224,16 @@ class SoundManager {
         console.warn('Failed to unload sound:', error)
       )
     );
+    
+    if (this.backgroundMusic) {
+      unloadPromises.push(
+        this.backgroundMusic.unloadAsync().catch(error =>
+          console.warn('Failed to unload background music:', error)
+        )
+      );
+      this.backgroundMusic = null;
+    }
+    
     await Promise.all(unloadPromises);
     this.sounds.clear();
   }

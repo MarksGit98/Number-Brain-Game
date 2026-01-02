@@ -81,13 +81,13 @@ export default function CircularIconButton({
       <Animated.View
         style={[
           styles.button,
+          disabled && styles.buttonDisabled,
+          style,
           {
-            shadowColor: disabled ? '#B0B0B0' : COLORS.SHADOW_BLACK,
+            shadowColor: disabled ? COLORS.BACKGROUND_DISABLED_DARK : COLORS.SHADOW_BLACK,
             shadowOpacity: shadowOpacityAnim,
             shadowOffset: SHADOW_OFFSETS.CIRCULAR,
           },
-          disabled && styles.buttonDisabled,
-          style,
         ]}
       >
         <TouchableOpacity

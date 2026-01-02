@@ -11,9 +11,10 @@ const SCALE = Math.min(SCALE_WIDTH, SCALE_HEIGHT);
 
 // Font sizes (percentage of screen height)
 export const FONT_SIZES = {
-  TITLE: SCREEN_HEIGHT * 0.037, // ~30px on base
-  PLAY_BUTTON: SCREEN_HEIGHT * 0.108, // ~88px on base
-  TARGET_NUMBER: SCREEN_HEIGHT * 0.163, // ~132px on base (increased 10% from 120px)
+  TITLE: SCREEN_HEIGHT * 0.048, // Increased font size (~38px on base)
+  PLAY_BUTTON: SCREEN_HEIGHT * 0.11, // ~88px on base
+  TARGET_NUMBER: SCREEN_HEIGHT * 0.17, // ~132px on base (increased 10% from 120px)
+  PLAY_BUTTON_TEXT: SCREEN_HEIGHT * 0.162, // ~18px on base
   DIFFICULTY_BUTTON: SCREEN_HEIGHT * 0.022, // ~18px on base
   DIFFICULTY_SUBTEXT: SCREEN_HEIGHT * 0.015, // ~12px on base
   HISTORY_TITLE: SCREEN_HEIGHT * 0.020, // ~16px on base
@@ -32,9 +33,9 @@ export const SPACING = {
   MARGIN_MEDIUM: SCREEN_HEIGHT * 0.025, // ~20px
   MARGIN_LARGE: SCREEN_HEIGHT * 0.037, // ~30px
   MARGIN_XLARGE: SCREEN_HEIGHT * 0.062, // ~50px
-  // Level library tile spacing - calculated to fit exactly 3 tiles per row
-  // Each tile has margin on all sides, so we need 6 margins total (2 per button) for 3 buttons
-  LEVEL_TILE_MARGIN: SCREEN_WIDTH * 0.054, // ~20px on base, calculated to fit 3 tiles per row
+  // Level library tile spacing - calculated to fit exactly 4 tiles per row
+  // Each tile has margin on all sides, so we need 8 margins total (2 per button) for 4 buttons
+  LEVEL_TILE_MARGIN: SCREEN_WIDTH * 0.02, // Reduced to fit 4 tiles per row with smaller gaps
   
   // Padding
   PADDING_SMALL: SCREEN_HEIGHT * 0.012, // ~10px
@@ -77,10 +78,10 @@ export const BUTTON_SIZES = {
 // Calculator/Target display
 export const CALCULATOR_DISPLAY = {
   WIDTH: SCREEN_WIDTH * 0.8, // ~280px on base
-  HEIGHT: SCREEN_HEIGHT * 0.18, // ~80px on base
+  HEIGHT: SCREEN_HEIGHT * 0.18, // ~82px on base (increased by ~2.8% from 0.18 to avoid text cutoff)
   PADDING_HORIZONTAL: SCREEN_WIDTH * 0.05, // ~40px on base
   PADDING_VERTICAL: SCREEN_HEIGHT * 0.015, // ~12px
-  BORDER_RADIUS: SCREEN_HEIGHT * 0.010, // ~8px
+  BORDER_RADIUS: SCREEN_HEIGHT * 0.012, // ~10px (increased from 0.010 for more rounded edges)
   SHADOW_OFFSET: SCREEN_WIDTH * 0.011, // ~4px
 };
 
@@ -88,25 +89,33 @@ export const CALCULATOR_DISPLAY = {
 export const HISTORY_BOX = {
   WIDTH: SCREEN_WIDTH * .92, // Full width with padding
   MAX_WIDTH: SCREEN_WIDTH * 1.013, // ~380px on base
-  PADDING: SCREEN_HEIGHT * 0.017, // ~14px - equal top and bottom padding
+  PADDING_HORIZONTAL: SCREEN_HEIGHT * 0.012, // Horizontal padding (left/right) - increased for more space
+  PADDING_VERTICAL: SCREEN_HEIGHT * 0.015, // Container top/bottom padding (increased for bigger margins)
   BORDER_RADIUS: SCREEN_HEIGHT * 0.020, // ~16px
-  // Height calculation for one history bar (no title)
+  // Height calculation for one history bar
   // One line = padding top + bar (padding + text + padding) + padding bottom
-  // Text font size is 1.06x the base, so line height accounts for this
-  HEIGHT_ONE_LINE: (SCREEN_HEIGHT * 0.017) + // Padding top
-                   (SCREEN_HEIGHT * 0.012 * 2) + // Bar padding vertical (top + bottom) - increased
-                   (SCREEN_HEIGHT * 0.017 * 1.06) + // History text font size * 1.06 (actual line height)
-                   (SCREEN_HEIGHT * 0.017), // Padding bottom
-  // Height per additional bar = bar padding + text + margin bottom
-  BAR_HEIGHT: (SCREEN_HEIGHT * 0.012 * 2) + // Bar padding vertical (top + bottom) - increased
-              (SCREEN_HEIGHT * 0.017 * 1.06) + // History text font size * 1.06 (actual line height)
-              SCREEN_HEIGHT * 0.007, // Bar margin bottom
+  // Text font size is 1.10x the base, so line height accounts for this
+  HEIGHT_ONE_LINE: (SCREEN_HEIGHT * 0.010) + // Padding top (container padding vertical)
+                   (SCREEN_HEIGHT * 0.005 * 2) + // Bar padding vertical (top + bottom) - smaller line spacing
+                   (SCREEN_HEIGHT * 0.017 * 1.10) + // History text font size * 1.10 (actual line height)
+                   (SCREEN_HEIGHT * 0.010), // Padding bottom (container padding vertical - equal to top)
+  // Height per additional bar = bar padding + text (no margin between seamless lines)
+  BAR_HEIGHT: (SCREEN_HEIGHT * 0.005 * 2) + // Bar padding vertical (top + bottom) - smaller line spacing
+              (SCREEN_HEIGHT * 0.017 * 1.10), // History text font size * 1.10 (actual line height)
+              // No margin bottom for seamless appearance
   BAR_PADDING_HORIZONTAL: SCREEN_WIDTH * 0.032, // ~12px
-  BAR_PADDING_VERTICAL: SCREEN_HEIGHT * 0.012, // ~10px (increased to prevent text cutoff)
-  BAR_MARGIN_BOTTOM: SCREEN_HEIGHT * 0.007, // ~6px
+  BAR_PADDING_VERTICAL: SCREEN_HEIGHT * 0.005, // Smaller padding between lines
+  // BAR_MARGIN_BOTTOM removed - lines are seamless (no margin between bars)
   BAR_BORDER_RADIUS: SCREEN_HEIGHT * 0.007, // ~6px
-  // Max height for wrapper (hard difficulty with 5 entries)
-  HEIGHT_HARD: SCREEN_HEIGHT * 0.286, // ~232px
+  // Max height calculations for each difficulty (fixed height)
+  // Formula: (padding top + padding bottom) + (number of lines * (bar padding * 2 + text height))
+  // Text height = SCREEN_HEIGHT * 0.017 * 1.10
+  HEIGHT_EASY: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding (increased)
+               (3 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))), // 3 lines
+  HEIGHT_MEDIUM: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding (increased)
+                 (4 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))), // 4 lines
+  HEIGHT_HARD: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding (increased)
+               (5 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))), // 5 lines
 };
 
 // Border radius

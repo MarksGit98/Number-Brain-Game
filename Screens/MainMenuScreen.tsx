@@ -7,7 +7,10 @@ import DifficultyButton from '../Components/DifficultyButton';
 import SettingsButton from '../Components/SettingsButton';
 import LibraryButton from '../Components/LibraryButton';
 import PressableButton3D from '../Components/PressableButton3D';
-import { FONT_SIZES, SPACING, BUTTON_SIZES, COLORS, BORDER_RADIUS, BUTTON_BORDER } from '../constants/sizing';
+import { SCREEN_DIMENSIONS, FONT_SIZES, SPACING, BUTTON_SIZES, COLORS, BORDER_RADIUS, BUTTON_BORDER } from '../constants/sizing';
+
+const SCREEN_WIDTH = SCREEN_DIMENSIONS.WIDTH;
+const SCREEN_HEIGHT = SCREEN_DIMENSIONS.HEIGHT;
 
 interface MainMenuScreenProps {
   selectedDifficulty: Difficulty;
@@ -35,7 +38,16 @@ export default function MainMenuScreen({
       <View style={styles.settingsButtonContainer}>
         <SettingsButton onPress={onOpenSettings} />
       </View>
-      <Text style={styles.title}>Number Brain</Text>
+      <View style={styles.titleContainer}>
+        {['D', 'I', 'G', 'I', 'T', 'L'].map((letter, i) => (
+          <React.Fragment key={i}>
+            <View style={styles.solarPanelCell}>
+              <Text style={styles.titleLetter}>{letter}</Text>
+            </View>
+            {i < 5 && <View style={styles.solarPanelDivider} />}
+          </React.Fragment>
+        ))}
+      </View>
       
       <View style={styles.menuContent}>
         <PlayButton
@@ -106,11 +118,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
-    fontSize: FONT_SIZES.TITLE,
-    fontWeight: 'bold',
-    color: '#2c3e50',
+  titleContainer: {
+    backgroundColor: '#8B7355', // Light brown/tan color for solar panel (matching calculator aesthetic)
+    paddingVertical: SCREEN_HEIGHT * 0.003, // Reduced vertical padding
+    paddingHorizontal: SCREEN_WIDTH * 0.02, // Reduced horizontal padding for smaller width
+    borderRadius: SCREEN_HEIGHT * 0.006,
     marginBottom: SPACING.MARGIN_MEDIUM,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: SCREEN_HEIGHT * 0.035, // Fixed smaller height
+    width: SCREEN_WIDTH * 0.4, // Scaled down to fit between top circles
+    alignSelf: 'center', // Center horizontally
+    // Create rectangular solar panel cells
+    overflow: 'hidden',
+  },
+  solarPanelCell: {
+    flex: 1,
+    height: '100%',
+    backgroundColor: '#6B5D4F', // Darker brown for individual solar panel cells
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  solarPanelDivider: {
+    width: 2,
+    height: '100%',
+    backgroundColor: '#8B7355', // Same as container background for vertical bar
+  },
+  titleLetter: {
+    fontSize: FONT_SIZES.TITLE,
+    fontFamily: 'Digital-7-Mono',
+    color: COLORS.BACKGROUND_DARK, // Same color as calculator display background
+    textAlign: 'center',
+    // Text shadow for thickness (Digital-7-Mono doesn't support bold)
+    textShadowColor: COLORS.BACKGROUND_DARK,
+    textShadowOffset: { width: 1.5, height: 1.5 },
+    textShadowRadius: 2,
   },
   playButton: {
     width: 200,
