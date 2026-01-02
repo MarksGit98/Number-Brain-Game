@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { TouchableOpacity, StyleSheet, Animated, Text, View, ViewStyle, TextStyle } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { TouchableOpacity, StyleSheet, Animated, Text, View, ViewStyle, TextStyle, Dimensions } from 'react-native';
 import { FONT_SIZES, CALCULATOR_DISPLAY, LETTER_SPACING, SPACING, COLORS, ANIMATION, BUTTON_BORDER } from '../constants/sizing';
 import { TEXT_SHADOW_BOLD_STRONG } from '../constants/fonts';
 import { soundManager } from '../utils/soundManager';
@@ -19,6 +19,7 @@ export default function PlayButton({
 }: PlayButtonProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const chyronAnim = useRef(new Animated.Value(0)).current;
 
   const handlePressIn = () => {
     Animated.parallel([
@@ -55,6 +56,40 @@ export default function PlayButton({
     onPress();
   };
 
+  // Chyron animation - scrolls text horizontally (matches CSS chyronWrap)
+  // Animation goes: 100% -> -100% -> 100% over 10 seconds
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        // Move from right (100%) to left (-100%) - takes 50% of animation (5 seconds)
+        Animated.timing(chyronAnim, {
+          toValue: 1,
+          duration: 5000,
+          useNativeDriver: true,
+        }),
+        // Move back from left (-100%) to right (100%) - takes 50% of animation (5 seconds)
+        Animated.timing(chyronAnim, {
+          toValue: 2,
+          duration: 5000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  // Calculate translation range based on button width
+  // CSS translateX(100%) means translate by 100% of element width
+  // For chyron effect, we want text to scroll across the button width
+  const buttonWidth = CALCULATOR_DISPLAY.WIDTH;
+  const textWidth = buttonWidth * 0.3; // Approximate text width (PLAY is roughly 30% of button width)
+  
+  // Interpolate translateX: 0 -> 1 -> 2 maps to +textWidth -> -textWidth -> +textWidth
+  // This creates the scrolling effect where text moves from right to left and back
+  const translateX = chyronAnim.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [textWidth, -textWidth, textWidth],
+  });
+
   const borderWidth = BUTTON_BORDER.WIDTH * 5;
 
   return (
@@ -87,7 +122,16 @@ export default function PlayButton({
         activeOpacity={1}
         style={styles.buttonInner}
       >
-        <Text style={[styles.text, textStyle]}>PLAY</Text>
+        <Animated.View
+          style={[
+            styles.textContainer,
+            {
+              transform: [{ translateX }],
+            },
+          ]}
+        >
+          <Text style={[styles.text, textStyle]}>PLAY</Text>
+        </Animated.View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -127,8 +171,12 @@ const styles = StyleSheet.create({
     height: '100%' as const,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    display: 'flex', // Ensure flex layout
+    overflow: 'hidden' as const,
+    display: 'flex' as const,
+  },
+  textContainer: {
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   },
   text: {
     fontSize: FONT_SIZES.PLAY_BUTTON_TEXT,

@@ -34,6 +34,8 @@ interface GameScreenProps {
   onOpenLevelLibrary: () => void;
   onOpenSettings: () => void;
   onSuccessBannerDismiss: () => void;
+  isAdFree: boolean;
+  onPurchaseAdFree: () => void;
   targetContainerRef: React.RefObject<View | null>;
   digitContainerRef: React.RefObject<View | null>;
   animatingDigitButtonRef: React.RefObject<any>;
@@ -62,6 +64,8 @@ export default function GameScreen({
   onOpenLevelLibrary,
   onOpenSettings,
   onSuccessBannerDismiss,
+  isAdFree,
+  onPurchaseAdFree,
   targetContainerRef,
   digitContainerRef,
   animatingDigitButtonRef,
@@ -83,9 +87,27 @@ export default function GameScreen({
           activeOpacity={1}
           onPress={onSuccessBannerDismiss}
         >
-          <View style={styles.successBanner}>
-            <Text style={styles.successBannerText}>{successMessage}!</Text>
-          </View>
+          <TouchableOpacity 
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.successBanner}>
+              <Text style={styles.successBannerText}>{successMessage}!</Text>
+              {!isAdFree && (
+                <TouchableOpacity
+                  style={styles.purchaseButton}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    onPurchaseAdFree();
+                    onSuccessBannerDismiss();
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.purchaseButtonText}>Purchase Ad-Free</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       )}
       
@@ -384,7 +406,7 @@ export default function GameScreen({
                     ) : (
                       <Text style={styles.historyTextEmpty} />
                     )}
-                    </View>
+                  </View>
                   );
                 }
                 
@@ -635,75 +657,53 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   historyContainer: {
-    // Simplified styling matching target container exactly
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.BACKGROUND_DARK,
-    paddingHorizontal: HISTORY_BOX.PADDING_HORIZONTAL,
-    paddingTop: HISTORY_BOX.PADDING_VERTICAL,
-    paddingBottom: HISTORY_BOX.PADDING_VERTICAL,
+    backgroundColor: COLORS.BACKGROUND_DARK, // Same background as calculator display
     borderRadius: HISTORY_BOX.BORDER_RADIUS,
-    width: CALCULATOR_DISPLAY.WIDTH,
+    width: CALCULATOR_DISPLAY.WIDTH, // Match target display box width
     maxWidth: HISTORY_BOX.MAX_WIDTH,
-    // Metallic border effect - same as target container
-    borderTopColor: '#B0B0B0',
-    borderLeftColor: '#909090',
-    borderRightColor: '#404040',
-    borderBottomColor: '#404040',
-    borderTopWidth: BUTTON_BORDER.WIDTH * 5,
+    // Metallic border effect with glisten - same as calculator display
+    // Top border is brightest (direct light), left is slightly dimmer (indirect light) for realistic corner depth
+    borderTopColor: '#B0B0B0', // Brightest metallic gray (top highlight - direct light source)
+    borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
+    borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
+    borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
+    borderTopWidth: BUTTON_BORDER.WIDTH * 5, // Increased border size
     borderLeftWidth: BUTTON_BORDER.WIDTH * 5,
     borderRightWidth: BUTTON_BORDER.WIDTH * 5,
     borderBottomWidth: BUTTON_BORDER.WIDTH * 5,
-    // Shadow effect
+    // Subtle glisten effect with shadow (scaled down)
     shadowColor: '#A0A0A0',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.25,
     shadowRadius: 1.5,
     elevation: 1.5,
     overflow: 'hidden' as const, // Critical: clip content to border radius
-    display: 'flex',
-    alignSelf: 'center',
+    alignSelf: 'center' as const, // Center horizontally like other calculator displays
+    justifyContent: 'center' as const, // Center content vertically
+    position: 'relative' as const, // Ensure absolutely positioned children are relative to this
   },
   historyInnerBorder: {
-    position: 'absolute',
-    // Simplified positioning - inset from all sides to ensure it stays within outer border
-    top: BUTTON_BORDER.WIDTH * 5 + 2,
+    position: 'absolute' as const,
+    top: BUTTON_BORDER.WIDTH * 5 + 2, // Outer border width + small gap
     left: BUTTON_BORDER.WIDTH * 5 + 2,
     right: BUTTON_BORDER.WIDTH * 5 + 2,
     bottom: BUTTON_BORDER.WIDTH * 5 + 2,
-    backgroundColor: '#1F1F1F', // Darker inner border
-    // Border radius must be smaller than outer border radius minus border width and gap
-    // Ensure it's at least 2px to maintain rounded corners
-    borderRadius: Math.max(2, HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2),
-    zIndex: 0,
+    backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
+    borderRadius: HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2,
+    zIndex: 0, // Behind content
   },
   historyContent: {
-    position: 'absolute',
-    // Position content area inside the inner border
-    top: BUTTON_BORDER.WIDTH * 5 + 2,
-    left: BUTTON_BORDER.WIDTH * 5 + 2,
-    right: BUTTON_BORDER.WIDTH * 5 + 2,
-    bottom: BUTTON_BORDER.WIDTH * 5 + 2,
-    backgroundColor: COLORS.BACKGROUND_DARK, // Match calculator display background (#2C2C2C)
-    borderRadius: Math.max(2, HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2),
-    overflow: 'hidden' as const, // Clip content to border radius
-    zIndex: 1, // Above inner border, below text
-    // Add internal padding on all sides
+    flex: 1,
+    backgroundColor: COLORS.BACKGROUND_DARK, // Lighter background for text area (#2C2C2C)
     paddingHorizontal: HISTORY_BOX.PADDING_HORIZONTAL,
-    paddingTop: HISTORY_BOX.PADDING_VERTICAL,
-    paddingBottom: HISTORY_BOX.PADDING_VERTICAL,
+    paddingVertical: HISTORY_BOX.PADDING_VERTICAL,
+    zIndex: 1, // Above inner border
   },
   historyBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.BACKGROUND_DARK, // Same as container for seamless appearance
-    paddingHorizontal: 0, // Remove horizontal padding to prevent overflow - padding handled by container
+    paddingHorizontal: 0, // Padding handled by historyContent
     paddingVertical: HISTORY_BOX.BAR_PADDING_VERTICAL,
-    // Remove borderRadius, margin, and shadows for seamless calculator display appearance
-    zIndex: 1, // Above inner border
-    // Ensure content doesn't extend beyond container bounds
-    maxWidth: '100%' as const,
-    overflow: 'hidden' as const,
   },
   historyBarLast: {
     // No special styling needed for last bar
@@ -893,6 +893,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
+    marginBottom: SPACING.MARGIN_SMALL,
+  },
+  purchaseButton: {
+    backgroundColor: COLORS.BUTTON_BLUE,
+    paddingVertical: SPACING.PADDING_MEDIUM,
+    paddingHorizontal: SPACING.PADDING_LARGE,
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    borderWidth: BUTTON_BORDER.WIDTH,
+    borderColor: BUTTON_BORDER.COLOR,
+    marginTop: SPACING.MARGIN_SMALL,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // 3D depth effect with shadow
+    shadowColor: COLORS.SHADOW_BLACK,
+    shadowOffset: SHADOW_OFFSETS.STANDARD_ALT,
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  purchaseButtonText: {
+    color: COLORS.BACKGROUND_WHITE,
+    fontSize: FONT_SIZES.BUTTON_TEXT,
+    fontWeight: '600' as const,
   },
   animatedDigitContainer: {
     position: 'absolute',

@@ -79,7 +79,6 @@ const DigitButton = forwardRef<ComponentRef<typeof TouchableOpacity>, DigitButto
             { translateX: translateXAnim },
             { translateY: translateYAnim },
           ],
-          opacity: isAnimating ? ANIMATION.OPACITY_HIDDEN : ANIMATION.OPACITY_FULL,
         },
       ]}
     >

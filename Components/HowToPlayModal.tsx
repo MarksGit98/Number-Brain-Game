@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { Modal, StyleSheet, View, Text, TouchableOpacity, TouchableWithoutFeedback, Animated, ScrollView } from 'react-native';
-import { SCREEN_DIMENSIONS, SPACING, COLORS, FONT_SIZES, BORDER_RADIUS, BUTTON_BORDER, SHADOW_OFFSETS, ANIMATION, HISTORY_BOX, LETTER_SPACING, SHADOW, BUTTON_SIZES, CALCULATOR_DISPLAY } from '../constants/sizing';
-import { TEXT_SHADOW_BOLD_MEDIUM } from '../constants/fonts';
+import { SCREEN_DIMENSIONS, SPACING, COLORS, FONT_SIZES, BORDER_RADIUS, BUTTON_BORDER, SHADOW_OFFSETS, ANIMATION } from '../constants/sizing';
 import { soundManager } from '../utils/soundManager';
 
 interface HowToPlayModalProps {
@@ -130,9 +129,9 @@ export default function HowToPlayModal({
                 showsVerticalScrollIndicator={true}
                 nestedScrollEnabled={true}
               >
-                <View style={[styles.instructionBar, styles.instructionBarFirst]}>
+                <View style={styles.instructionItem}>
                   <View style={styles.instructionTextContainer}>
-                    <Text style={styles.instructionText}>1. Each puzzle begins with a set of single digit number tiles </Text>
+                    <Text style={styles.instructionText}>• Each puzzle begins with a set of single digit number tiles </Text>
                     <View style={styles.inlineTileContainer}>
                       <View style={styles.miniTile}><Text style={styles.miniTileText}>7</Text></View>
                       <View style={styles.miniTile}><Text style={styles.miniTileText}>3</Text></View>
@@ -153,19 +152,19 @@ export default function HowToPlayModal({
                     <Text style={styles.instructionText}>.</Text>
                   </View>
                 </View>
-                <View style={styles.instructionBar}>
+                <View style={styles.instructionItem}>
                   <Text style={styles.instructionText}>
-                    2. Select two numbers from the available digits and one of the math symbols to perform an operation.
+                    • Select two numbers from the available digits and one of the math symbols to perform an operation.
                   </Text>
                 </View>
-                <View style={styles.instructionBar}>
+                <View style={styles.instructionItem}>
                   <Text style={styles.instructionText}>
-                    3. Only operations that result in positive integers are valid.
+                    • Only operations that result in positive integers are valid.
                   </Text>
                 </View>
-                <View style={[styles.instructionBar, styles.instructionBarLast]}>
+                <View style={styles.instructionItem}>
                   <Text style={styles.instructionText}>
-                    4. Continue performing operations until you are left with a single number tile equal to the target number.
+                    • Continue performing operations until you are left with a single number tile equal to the target number.
                   </Text>
                 </View>
               
@@ -211,6 +210,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 10,
     justifyContent: 'flex-start' as const,
+    flexDirection: 'column' as const,
   },
   modalTitle: {
     fontSize: FONT_SIZES.TITLE,
@@ -220,103 +220,67 @@ const styles = StyleSheet.create({
     textAlign: 'center' as const,
   },
   scrollView: {
-    height: SCREEN_HEIGHT * 0.4, // Reduced from 0.45
+    flexGrow: 1,
+    flexShrink: 1,
+    maxHeight: SCREEN_HEIGHT * 0.5,
   },
   scrollContent: {
-    paddingBottom: SPACING.PADDING_SMALL / 2, // Reduced padding
+    paddingBottom: SPACING.PADDING_SMALL,
   },
-  instructionBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.BACKGROUND_DARK,
-    paddingHorizontal: HISTORY_BOX.BAR_PADDING_HORIZONTAL,
-    paddingVertical: HISTORY_BOX.BAR_PADDING_VERTICAL,
-    borderRadius: HISTORY_BOX.BAR_BORDER_RADIUS,
-    marginBottom: 0, // No margin bottom for seamless appearance
-    // Metallic border effect with glisten - scaled appropriately for instruction bars
-    // Top border is brightest (direct light), left is slightly dimmer (indirect light) for realistic corner depth
-    borderTopColor: '#B0B0B0', // Brightest metallic gray (top highlight - direct light source)
-    borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
-    borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
-    borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
-    borderTopWidth: BUTTON_BORDER.WIDTH * 1.5, // Scaled border width for smaller instruction bars
-    borderLeftWidth: BUTTON_BORDER.WIDTH * 1.5,
-    borderRightWidth: BUTTON_BORDER.WIDTH * 1.5,
-    borderBottomWidth: BUTTON_BORDER.WIDTH * 1.5,
-    // Subtle glisten effect with shadow (scaled down for smaller bars)
-    shadowColor: '#A0A0A0',
-    shadowOffset: { width: 0, height: 0.5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1,
-    elevation: 1,
-  },
-  instructionBarFirst: {
-    marginTop: 0,
-  },
-  instructionBarLast: {
-    marginBottom: 0,
+  instructionItem: {
+    marginBottom: SPACING.MARGIN_SMALL,
   },
   instructionTextContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     flex: 1,
-    alignContent: 'flex-start',
-    alignSelf: 'flex-start', // Align to start to prevent wrapping issues
   },
   instructionText: {
-    fontSize: FONT_SIZES.HISTORY_TEXT * 1.06,
-    color: COLORS.TEXT_SUCCESS,
-    fontFamily: 'Digital-7-Mono',
-    ...TEXT_SHADOW_BOLD_MEDIUM,
-    letterSpacing: LETTER_SPACING.TIGHT,
+    fontSize: FONT_SIZES.BUTTON_TEXT,
+    color: COLORS.BACKGROUND_DARK,
+    lineHeight: FONT_SIZES.BUTTON_TEXT * 1.4,
   },
   inlineTileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 2, // Reduced horizontal margin
-    flexShrink: 1, // Allow shrinking if needed
-    flexGrow: 0, // Don't grow
+    marginHorizontal: 4,
   },
   miniTile: {
-    width: SCREEN_WIDTH * 0.028, // Further reduced size to fit inline
-    height: SCREEN_WIDTH * 0.028,
+    width: SCREEN_WIDTH * 0.06,
+    height: SCREEN_WIDTH * 0.06,
     backgroundColor: COLORS.BACKGROUND_WHITE,
-    borderRadius: SCREEN_WIDTH * 0.007,
+    borderRadius: SCREEN_WIDTH * 0.01,
     borderWidth: BUTTON_BORDER.WIDTH,
     borderColor: BUTTON_BORDER.COLOR,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 0.5, // Minimal margin between tiles
+    marginHorizontal: 2,
   },
   miniTileText: {
-    fontSize: FONT_SIZES.HISTORY_TEXT * 0.6,
+    fontSize: FONT_SIZES.BUTTON_TEXT * 0.7,
     color: COLORS.TEXT_PRIMARY,
-    fontFamily: 'Digital-7-Mono',
     fontWeight: 'bold',
   },
   inlineOperationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 2, // Reduced to match tiles
-    flexShrink: 1, // Allow shrinking if needed
-    flexGrow: 0, // Don't grow
+    marginHorizontal: 4,
   },
   miniOperation: {
-    width: SCREEN_WIDTH * 0.028, // Match tile size
-    height: SCREEN_WIDTH * 0.028,
+    width: SCREEN_WIDTH * 0.06,
+    height: SCREEN_WIDTH * 0.06,
     backgroundColor: COLORS.BUTTON_ORANGE,
-    borderRadius: SCREEN_WIDTH * 0.014, // Circular
+    borderRadius: SCREEN_WIDTH * 0.03,
     borderWidth: BUTTON_BORDER.WIDTH,
     borderColor: BUTTON_BORDER.COLOR,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 0.5, // Minimal margin to match tiles
+    marginHorizontal: 2,
   },
   miniOperationText: {
-    fontSize: FONT_SIZES.HISTORY_TEXT * 0.5,
+    fontSize: FONT_SIZES.BUTTON_TEXT * 0.6,
     color: COLORS.TEXT_WHITE,
-    fontFamily: 'Digital-7-Mono',
     fontWeight: 'bold',
   },
   inlineTargetContainer: {
@@ -325,20 +289,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   miniTarget: {
-    minWidth: SCREEN_WIDTH * 0.08,
-    height: SCREEN_WIDTH * 0.05,
+    minWidth: SCREEN_WIDTH * 0.12,
+    height: SCREEN_WIDTH * 0.06,
     backgroundColor: COLORS.BACKGROUND_DARK,
     borderRadius: SCREEN_WIDTH * 0.01,
     borderWidth: BUTTON_BORDER.WIDTH * 2,
     borderColor: BUTTON_BORDER.COLOR,
-    paddingHorizontal: SCREEN_WIDTH * 0.01,
+    paddingHorizontal: SCREEN_WIDTH * 0.02,
     alignItems: 'center',
     justifyContent: 'center',
   },
   miniTargetText: {
-    fontSize: FONT_SIZES.HISTORY_TEXT * 0.7,
+    fontSize: FONT_SIZES.BUTTON_TEXT * 0.8,
     color: COLORS.TEXT_SUCCESS,
-    fontFamily: 'Digital-7-Mono',
     fontWeight: 'bold',
   },
   buttonInner: {
@@ -355,7 +318,7 @@ const styles = StyleSheet.create({
     borderColor: BUTTON_BORDER.COLOR,
     shadowRadius: 0,
     elevation: 0,
-    marginTop: SPACING.MARGIN_SMALL / 2, // Reduced margin
+    marginTop: 0,
   },
   closeButton: {
     // Margin handled by parent if needed

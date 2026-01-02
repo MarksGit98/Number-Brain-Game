@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Modal, StyleSheet, View, Text, TouchableOpacity, TouchableWithoutFeedback, Animated } from 'react-native';
+import { Modal, StyleSheet, View, Text, TouchableOpacity, TouchableWithoutFeedback, Animated, Platform, Linking } from 'react-native';
 import { SCREEN_DIMENSIONS, SPACING, COLORS, FONT_SIZES, BORDER_RADIUS, BUTTON_BORDER, SHADOW_OFFSETS, ANIMATION } from '../constants/sizing';
 import { soundManager } from '../utils/soundManager';
 
@@ -211,15 +211,37 @@ export default function SettingsModal({
                 <Text style={styles.privacyPolicyLinkText}>Privacy Policy</Text>
               </TouchableOpacity>
 
-              {/* Ad-Free Purchase Button */}
-              <ButtonWithAnimation
-                onPress={onPurchaseAdFree}
-                style={styles.purchaseButton}
-                textStyle={styles.purchaseButtonText}
-                buttonStyle={styles.purchaseButtonBase}
-              >
-                Purchase Ad-Free Version
-              </ButtonWithAnimation>
+              {/* Ad-Free Purchase Button - only show if not ad-free */}
+              {!isAdFree && (
+                <ButtonWithAnimation
+                  onPress={onPurchaseAdFree}
+                  style={styles.purchaseButton}
+                  textStyle={styles.purchaseButtonText}
+                  buttonStyle={styles.purchaseButtonBase}
+                >
+                  Purchase Ad-Free Version
+                </ButtonWithAnimation>
+              )}
+
+              {/* Web Version Link Button - only show on web */}
+              {Platform.OS === 'web' && (
+                <ButtonWithAnimation
+                  onPress={() => {
+                    soundManager.playSound('buttonPress');
+                    const url = 'https://www.digitlgame.com';
+                    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                      window.open(url, '_blank');
+                    } else {
+                      Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+                    }
+                  }}
+                  style={styles.webVersionButton}
+                  textStyle={styles.webVersionButtonText}
+                  buttonStyle={styles.webVersionButtonBase}
+                >
+                  Visit Website
+                </ButtonWithAnimation>
+              )}
 
               {/* Close Button */}
               <ButtonWithAnimation
@@ -353,6 +375,25 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.BUTTON_TEXT,
     fontWeight: '500' as const,
     textDecorationLine: 'none' as const, // Remove underline
+  },
+  webVersionButtonBase: {
+    backgroundColor: COLORS.BUTTON_ORANGE,
+    paddingVertical: SPACING.PADDING_MEDIUM,
+    paddingHorizontal: SPACING.PADDING_LARGE,
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    borderWidth: BUTTON_BORDER.WIDTH,
+    borderColor: BUTTON_BORDER.COLOR,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  webVersionButton: {
+    marginTop: SPACING.MARGIN_SMALL,
+    marginBottom: SPACING.MARGIN_SMALL,
+  },
+  webVersionButtonText: {
+    color: COLORS.BACKGROUND_WHITE,
+    fontSize: FONT_SIZES.BUTTON_TEXT,
+    fontWeight: '600' as const,
   },
 });
 

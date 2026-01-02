@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Alert, Animated } from 'react-native';
+import { View, Alert, Animated, Linking, Platform } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Operation, Difficulty, GameState, Puzzle } from './types';
 import { getRandomPuzzle, getPuzzlesByDifficulty, getPuzzleByIndex, getPuzzleKey, performOperation, AFFIRMATIONS } from './utils';
@@ -204,7 +204,7 @@ export default function App() {
 
   useEffect(() => {
     if (showSuccessBanner) {
-      // Auto-advance after 2.5 seconds
+      // Auto-advance after 3 seconds
       successTimeoutRef.current = setTimeout(() => {
         if (successTimeoutRef.current) {
           clearTimeout(successTimeoutRef.current);
@@ -212,7 +212,7 @@ export default function App() {
         }
         setShowSuccessBanner(false);
         goToNextLevel();
-      }, 2500);
+      }, 3000);
 
       return () => {
         if (successTimeoutRef.current) {
@@ -301,8 +301,12 @@ export default function App() {
   };
 
   const handlePrivacyPolicyPress = () => {
-    // TODO: Add privacy policy link/URL
-    Alert.alert('Privacy Policy', 'Privacy policy link will be added here');
+    const url = 'https://www.digitlgame.com/privacy-policy';
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(url, '_blank');
+    } else {
+      Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+    }
   };
 
   const handleDeveloperModeToggle = async (enabled: boolean) => {
@@ -889,6 +893,8 @@ export default function App() {
       onOpenLevelLibrary={openLevelLibrary}
       onOpenSettings={() => setShowSettingsModal(true)}
       onSuccessBannerDismiss={handleSuccessBannerDismiss}
+        isAdFree={isAdFree}
+        onPurchaseAdFree={handlePurchaseAdFree}
         targetContainerRef={targetContainerRef}
         digitContainerRef={digitContainerRef}
         animatingDigitButtonRef={animatingDigitButtonRef}
