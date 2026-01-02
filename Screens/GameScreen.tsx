@@ -688,6 +688,10 @@ const styles = StyleSheet.create({
     borderRadius: Math.max(2, HISTORY_BOX.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2),
     overflow: 'hidden' as const, // Clip content to border radius
     zIndex: 1, // Above inner border, below text
+    // Add internal padding on all sides
+    paddingHorizontal: HISTORY_BOX.PADDING_HORIZONTAL,
+    paddingTop: HISTORY_BOX.PADDING_VERTICAL,
+    paddingBottom: HISTORY_BOX.PADDING_VERTICAL,
   },
   historyBar: {
     flexDirection: 'row',

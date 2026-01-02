@@ -7,6 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "web:dev": "expo start --web",
+    "web:build": "expo export:web",
     "generate-puzzles": "ts-node generatePuzzles.ts",
     "test-solver": "ts-node puzzleSolverTest.ts"
   },

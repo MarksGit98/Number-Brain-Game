@@ -195,25 +195,7 @@ export default function SettingsModal({
 
               {/* Ads Toggle removed - ads are now purely internal, not user-visible */}
 
-              {/* Developer Mode Toggle */}
-              <View style={styles.settingRow}>
-                <Text style={styles.settingLabel}>Developer Mode</Text>
-                <TouchableOpacity
-                  style={[styles.toggle, developerMode && styles.toggleActive]}
-                  onPress={() => {
-                    soundManager.playSound('buttonPress');
-                    onDeveloperModeToggle(!developerMode);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <View 
-                    style={[
-                      styles.toggleThumb, 
-                      { alignSelf: developerMode ? 'flex-end' : 'flex-start' }
-                    ]} 
-                  />
-                </TouchableOpacity>
-              </View>
+              {/* Developer Mode Toggle removed - internal only, not visible to users */}
 
               {/* Privacy Policy Link */}
               <TouchableOpacity

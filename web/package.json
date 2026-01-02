@@ -1,0 +1,16 @@
+{
+  "name": "digitl-web",
+  "version": "1.0.0",
+  "description": "Web version of Digitl game",
+  "private": true,
+  "scripts": {
+    "start": "expo start --web",
+    "build": "expo export:web"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-native": "^0.81.5",
+    "react-native-web": "^0.21.0"
+  }
+}
