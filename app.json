@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Digitl",
-    "slug": "number-brain",
+    "slug": "digitl",
     "version": "1.0.0",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
@@ -16,13 +16,22 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.markb98.digitl",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.markb98.digitl"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -31,6 +40,14 @@
     "plugins": [
       "expo-font",
       "expo-av"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9813fe23-350e-432e-ad0c-74dbe5a2fc1a"
+      }
+    },
+    "cli": {
+      "appVersionSource": "1.0"
+    }
   }
 }

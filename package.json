@@ -1,5 +1,5 @@
 {
-  "name": "number-brain",
+  "name": "digitl",
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
@@ -18,14 +18,14 @@
     "expo": "~54.0.0",
     "expo-av": "~16.0.8",
     "expo-font": "~14.0.10",
-    "expo-status-bar": "~2.0.0",
+    "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-reanimated": "~4.1.1",
-    "react-native-svg": "^15.15.1",
+    "react-native-svg": "^15.12.1",
     "react-native-web": "^0.21.0",
-    "react-native-worklets": "~0.5.1"
+    "react-native-worklets": "0.5.1"
   },
   "optionalDependencies": {
     "react-native-google-mobile-ads": "^14.0.0"
@@ -33,6 +33,7 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~19.1.10",
+    "sharp": "^0.34.5",
     "typescript": "^5.1.3"
   },
   "private": true

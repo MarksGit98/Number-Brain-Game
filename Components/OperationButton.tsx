@@ -147,7 +147,7 @@ export default function OperationButton({
           activeOpacity={1}
           style={styles.buttonInner}
         >
-          <Animated.Text 
+          <Text 
             style={[
               styles.text,
               {
@@ -157,7 +157,7 @@ export default function OperationButton({
             ]}
           >
             {displaySymbol}
-          </Animated.Text>
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>

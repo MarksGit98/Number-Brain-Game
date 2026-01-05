@@ -6,7 +6,6 @@ import { getRandomPuzzle, getPuzzlesByDifficulty, getPuzzleByIndex, getPuzzleKey
 import { saveCompletedPuzzles, loadCompletedPuzzles, saveLastPlayedLevel, loadLastPlayedLevel, saveMusicEnabled, loadMusicEnabled, saveSoundEffectsEnabled, loadSoundEffectsEnabled, saveAdsEnabled, loadAdsEnabled, saveAdFree, loadAdFree, saveDeveloperMode, loadDeveloperMode } from './utils/storage';
 import { adManager } from './utils/adManager';
 import BannerAdComponent from './Components/BannerAdComponent';
-import SampleBannerAd from './Components/SampleBannerAd';
 import MainMenuScreen from './Screens/MainMenuScreen';
 import GameScreen from './Screens/GameScreen';
 import LevelLibraryScreen from './Screens/LevelLibraryScreen';
@@ -343,7 +342,6 @@ export default function App() {
         onPrivacyPolicyPress={handlePrivacyPolicyPress}
       />
       <BannerAdComponent enabled={adsEnabled && !isAdFree} />
-      <SampleBannerAd />
     </>
   );
 }
@@ -920,7 +918,6 @@ export default function App() {
         onPrivacyPolicyPress={handlePrivacyPolicyPress}
       />
       <BannerAdComponent enabled={adsEnabled && !isAdFree} />
-      <SampleBannerAd />
     </>
   );
 }

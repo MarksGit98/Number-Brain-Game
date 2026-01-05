@@ -15,8 +15,8 @@ export const FONT_SIZES = {
   PLAY_BUTTON: SCREEN_HEIGHT * 0.11, // ~88px on base
   TARGET_NUMBER: SCREEN_HEIGHT * 0.165, // ~132px on base (increased 10% from 120px)
   PLAY_BUTTON_TEXT: SCREEN_HEIGHT * 0.155, // ~18px on base
-  DIFFICULTY_BUTTON: SCREEN_HEIGHT * 0.023, // ~18px on base (for game screen)
-  DIFFICULTY_BUTTON_LEVELS: SCREEN_HEIGHT * 0.018, // ~14px on base (for levels screen - smaller)
+  DIFFICULTY_BUTTON: SCREEN_HEIGHT * 0.025, // ~18px on base (for game screen)
+  DIFFICULTY_BUTTON_LEVELS: SCREEN_HEIGHT * 0.019, // ~14px on base (for levels screen - smaller)
   DIFFICULTY_SUBTEXT: SCREEN_HEIGHT * 0.016, // ~12px on base
   HISTORY_TITLE: SCREEN_HEIGHT * 0.020, // ~16px on base
   HISTORY_TEXT: SCREEN_HEIGHT * 0.017, // ~14px on base

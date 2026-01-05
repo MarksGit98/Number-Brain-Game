@@ -10,7 +10,6 @@ import HomeButton from '../Components/HomeButton';
 import LibraryButton from '../Components/LibraryButton';
 import SettingsButton from '../Components/SettingsButton';
 import SolarPanelDisplay from '../Components/SolarPanelDisplay';
-import PressableButton3D from '../Components/PressableButton3D';
 import { SCREEN_DIMENSIONS, FONT_SIZES, SPACING, CALCULATOR_DISPLAY, HISTORY_BOX, LEVEL_POSITION, CONTROLS, BORDER_RADIUS, SHADOW, LETTER_SPACING, BUTTON_SIZES, DIGIT_CONTAINER_POSITION, COLORS, FONT_WEIGHTS, SHADOW_OFFSETS, ELEVATION, ANIMATION, NUMERIC_CONSTANTS, BUTTON_BORDER, PADDING_VALUES } from '../constants/sizing';
 
 const SCREEN_WIDTH = SCREEN_DIMENSIONS.WIDTH;
