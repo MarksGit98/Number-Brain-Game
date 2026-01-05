@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { TouchableOpacity, StyleSheet, Animated, Text, ViewStyle, TextStyle } from 'react-native';
 import { BUTTON_SIZES, BUTTON_BORDER, ANIMATION, COLORS, SHADOW_OFFSETS, NUMERIC_CONSTANTS, ELEVATION, PADDING_VALUES } from '../constants/sizing';
 
@@ -30,7 +30,9 @@ export default function OperationButton({
   // Adjust vertical alignment for different symbols to center them properly (matching web version)
   // Scale adjustments proportionally with button size
   const verticalAdjustmentScale = BUTTON_SIZES.OPERATION_BUTTON_SIZE / 100; // Scale factor based on button size
-  const getVerticalAdjustment = () => {
+  
+  // Memoize the transform to ensure it's calculated correctly on first render
+  const verticalAdjustment = useMemo(() => {
     // Fine-tune each symbol for visual centering - may need different values per symbol
     // Using larger multipliers for better visual centering
     if (operation === '+') return [{ translateY: 16 * verticalAdjustmentScale }]; // Plus needs to move down even more to center
@@ -38,7 +40,7 @@ export default function OperationButton({
     if (operation === '*') return [{ translateY: -1 * verticalAdjustmentScale }]; // Multiplication needs to move up
     if (operation === '/') return [{ translateY: -1 * verticalAdjustmentScale }]; // Division needs to move up
     return [{ translateY: 0 }];
-  };
+  }, [operation, verticalAdjustmentScale]);
 
   // Handle press in (button pressed down)
   const handlePressIn = () => {
@@ -151,7 +153,7 @@ export default function OperationButton({
             style={[
               styles.text,
               {
-                transform: getVerticalAdjustment(),
+                transform: verticalAdjustment,
               },
               textStyle
             ]}

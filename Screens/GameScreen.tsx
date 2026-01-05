@@ -738,12 +738,16 @@ const styles = StyleSheet.create({
     zIndex: 0, // Behind text
   },
   historyContentWrapper: {
-    flex: 1,
+    position: 'absolute',
+    top: BUTTON_BORDER.WIDTH * 3 + 2,
+    left: BUTTON_BORDER.WIDTH * 3 + 2,
+    right: BUTTON_BORDER.WIDTH * 3 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 3 + 2,
     paddingTop: HISTORY_BOX.INNER_PADDING,
     paddingBottom: HISTORY_BOX.INNER_PADDING,
     paddingLeft: HISTORY_BOX.INNER_PADDING,
     paddingRight: HISTORY_BOX.INNER_PADDING,
-    justifyContent: 'center',
+    flexDirection: 'column',
     zIndex: 1,
   },
   historyBar: {
@@ -776,7 +780,9 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_SUCCESS,
     fontFamily: 'Digital-7-Mono',
     letterSpacing: LETTER_SPACING.TIGHT,
+    textAlign: 'left',
     flex: 1,
+    includeFontPadding: false,
   },
   historyTextEmpty: {
     fontSize: FONT_SIZES.HISTORY_TEXT * 1.10,
