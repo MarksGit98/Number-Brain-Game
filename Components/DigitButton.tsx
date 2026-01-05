@@ -30,6 +30,7 @@ const DigitButton = forwardRef<ComponentRef<typeof TouchableOpacity>, DigitButto
   const translateXAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
   const shadowOpacityAnim = useRef(new Animated.Value(1)).current;
+  const isPressedRef = useRef(false);
 
   const getBackgroundColor = () => {
     if (isError) return COLORS.DIGIT_ERROR;
@@ -38,37 +39,82 @@ const DigitButton = forwardRef<ComponentRef<typeof TouchableOpacity>, DigitButto
     return COLORS.BACKGROUND_WHITE;
   };
 
-  const getShadowColor = () => {
-    return COLORS.SHADOW_BLACK;
-  };
-
   const getTextColor = () => {
     if (isError || isFirstSelected || isSecondSelected) return COLORS.TEXT_WHITE;
     return COLORS.TEXT_SECONDARY;
   };
 
-
   const isSelected = isFirstSelected || isSecondSelected || isError;
+
+  // Handle press in (button pressed down)
+  const handlePressIn = () => {
+    if (!disabled && !isAnimating && !isSelected) {
+      isPressedRef.current = true;
+      Animated.parallel([
+        Animated.timing(translateXAnim, {
+          toValue: SHADOW_OFFSETS.STANDARD_ALT.width,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: SHADOW_OFFSETS.STANDARD_ALT.height,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacityAnim, {
+          toValue: ANIMATION.OPACITY_HIDDEN,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  };
+
+  // Handle press out (button released)
+  const handlePressOut = () => {
+    if (!disabled && !isAnimating && !isSelected) {
+      isPressedRef.current = false;
+      Animated.parallel([
+        Animated.timing(translateXAnim, {
+          toValue: ANIMATION.TRANSLATE_X_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: ANIMATION.TRANSLATE_Y_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacityAnim, {
+          toValue: ANIMATION.OPACITY_FULL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  };
 
   // Animate between unselected and selected states
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(translateXAnim, {
-        toValue: isSelected ? ANIMATION.TRANSLATE_X_SELECTED : ANIMATION.TRANSLATE_X_NORMAL,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: isSelected ? ANIMATION.TRANSLATE_Y_SELECTED : ANIMATION.TRANSLATE_Y_NORMAL,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shadowOpacityAnim, {
-        toValue: isSelected ? ANIMATION.OPACITY_HIDDEN : ANIMATION.OPACITY_FULL,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: false,
-      }),
-    ]).start();
+    if (!isPressedRef.current) {
+      Animated.parallel([
+        Animated.timing(translateXAnim, {
+          toValue: isSelected ? ANIMATION.TRANSLATE_X_SELECTED : ANIMATION.TRANSLATE_X_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: isSelected ? ANIMATION.TRANSLATE_Y_SELECTED : ANIMATION.TRANSLATE_Y_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacityAnim, {
+          toValue: isSelected ? ANIMATION.OPACITY_HIDDEN : ANIMATION.OPACITY_FULL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
   }, [isSelected, translateXAnim, translateYAnim, shadowOpacityAnim]);
 
   return (
@@ -90,14 +136,18 @@ const DigitButton = forwardRef<ComponentRef<typeof TouchableOpacity>, DigitButto
             shadowColor: COLORS.SHADOW_BLACK,
             shadowOpacity: shadowOpacityAnim,
             shadowOffset: SHADOW_OFFSETS.STANDARD_ALT,
+            shadowRadius: 0, // Solid black shadow (matches other buttons)
+            borderWidth: BUTTON_BORDER.WIDTH,
+            borderColor: BUTTON_BORDER.COLOR,
           },
-          isSelected && styles.buttonSelected,
           style,
         ]}
       >
         <TouchableOpacity
           ref={ref}
           onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
           disabled={disabled || isAnimating}
           activeOpacity={1}
           style={styles.buttonInner}
@@ -130,10 +180,6 @@ const styles = StyleSheet.create({
     height: BUTTON_SIZES.DIGIT_BUTTON_SIZE,
     borderRadius: BORDER_RADIUS.XLARGE,
     margin: BUTTON_SIZES.DIGIT_BUTTON_MARGIN,
-    borderWidth: BUTTON_BORDER.WIDTH,
-    borderColor: BUTTON_BORDER.COLOR,
-    shadowRadius: 0,
-    elevation: 0,
   },
   buttonInner: {
     width: '100%' as const,
@@ -141,13 +187,9 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
-  buttonSelected: {
-    // Transform is now handled by animated translateX/translateY on outer Animated.View
-  },
+
   text: {
-    // fontSize is now set dynamically based on digit length
     fontWeight: 'bold',
     ...TEXT_SHADOW_BOLD_MEDIUM,
   },

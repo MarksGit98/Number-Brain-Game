@@ -233,17 +233,18 @@ const styles = StyleSheet.create({
   instructionTextContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    alignItems: 'center',
+    alignItems: 'baseline',
     flex: 1,
   },
   instructionText: {
     fontSize: FONT_SIZES.BUTTON_TEXT,
     color: COLORS.BACKGROUND_DARK,
     lineHeight: FONT_SIZES.BUTTON_TEXT * 1.4,
+    includeFontPadding: false,
   },
   inlineTileContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
     marginHorizontal: 4,
   },
   miniTile: {
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
   },
   inlineOperationContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
     marginHorizontal: 4,
   },
   miniOperation: {
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
   },
   inlineTargetContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
     marginHorizontal: 4,
   },
   miniTarget: {

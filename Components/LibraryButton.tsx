@@ -26,8 +26,8 @@ export default function LibraryButton({
     >
       <SvgXml 
         xml={libraryIconSvg} 
-        width={FONT_SIZES.BUTTON_TEXT * NUMERIC_CONSTANTS.FONT_MULTIPLIER_NAV_ARROW} 
-        height={FONT_SIZES.BUTTON_TEXT * NUMERIC_CONSTANTS.FONT_MULTIPLIER_NAV_ARROW} 
+        width={FONT_SIZES.BUTTON_TEXT * NUMERIC_CONSTANTS.FONT_MULTIPLIER_NAV_ARROW * 0.9} 
+        height={FONT_SIZES.BUTTON_TEXT * NUMERIC_CONSTANTS.FONT_MULTIPLIER_NAV_ARROW * 0.9} 
       />
     </CircularIconButton>
   );

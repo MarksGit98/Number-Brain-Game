@@ -87,6 +87,9 @@ export default function CircularIconButton({
             shadowColor: disabled ? COLORS.BACKGROUND_DISABLED_DARK : COLORS.SHADOW_BLACK,
             shadowOpacity: shadowOpacityAnim,
             shadowOffset: SHADOW_OFFSETS.CIRCULAR,
+            shadowRadius: 0, // Solid black shadow (matches other circular buttons)
+            borderWidth: BUTTON_BORDER.WIDTH,
+            borderColor: BUTTON_BORDER.COLOR,
           },
         ]}
       >
@@ -111,10 +114,6 @@ const styles = StyleSheet.create({
     height: BUTTON_SIZES.NAV_ARROW_SIZE,
     backgroundColor: COLORS.BUTTON_BLUE,
     borderRadius: BUTTON_SIZES.NAV_ARROW_SIZE / NUMERIC_CONSTANTS.DIVIDE_BY_2, // Circular
-    borderWidth: BUTTON_BORDER.WIDTH,
-    borderColor: BUTTON_BORDER.COLOR,
-    shadowRadius: 0, // Solid black shadow
-    elevation: ELEVATION.NONE,
   },
   buttonInner: {
     width: '100%' as const,
@@ -123,7 +122,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    padding: PADDING_VALUES.ZERO, // Ensure no padding affects centering
   },
   buttonDisabled: {
     backgroundColor: COLORS.BACKGROUND_DISABLED,

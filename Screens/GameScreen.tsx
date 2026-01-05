@@ -9,11 +9,20 @@ import UndoButton from '../Components/UndoButton';
 import HomeButton from '../Components/HomeButton';
 import LibraryButton from '../Components/LibraryButton';
 import SettingsButton from '../Components/SettingsButton';
+import SolarPanelDisplay from '../Components/SolarPanelDisplay';
 import PressableButton3D from '../Components/PressableButton3D';
 import { SCREEN_DIMENSIONS, FONT_SIZES, SPACING, CALCULATOR_DISPLAY, HISTORY_BOX, LEVEL_POSITION, CONTROLS, BORDER_RADIUS, SHADOW, LETTER_SPACING, BUTTON_SIZES, DIGIT_CONTAINER_POSITION, COLORS, FONT_WEIGHTS, SHADOW_OFFSETS, ELEVATION, ANIMATION, NUMERIC_CONSTANTS, BUTTON_BORDER, PADDING_VALUES } from '../constants/sizing';
 
 const SCREEN_WIDTH = SCREEN_DIMENSIONS.WIDTH;
 const SCREEN_HEIGHT = SCREEN_DIMENSIONS.HEIGHT;
+
+// Calculate spacing for target display digits based on mobile container size
+// Measure actual "8" width: Digital-7-Mono font typically has "8" at ~0.65-0.7x font size
+// We'll use 0.68 to ensure we have enough space for the full "8" character
+const actualDigit8Width = FONT_SIZES.TARGET_NUMBER * 0.48; // Actual measured width of "8" at this font size
+const containerPadding = SCREEN_WIDTH * 0.015; // Increased padding to prevent edge cutoff
+// Use condensed fixed spacing between digits (scaled for mobile, similar to web version)
+const digitSpacing = LETTER_SPACING.WIDE * 0.5; // Condensed spacing between digits
 
 interface GameScreenProps {
   gameState: GameState;
@@ -123,16 +132,12 @@ export default function GameScreen({
         />
       </View>
       
-      <View style={styles.titleContainer}>
-        {['D', 'I', 'G', 'I', 'T', 'L'].map((letter, i) => (
-          <React.Fragment key={i}>
-            <View style={styles.solarPanelCell}>
-              <Text style={styles.titleLetter}>{letter}</Text>
-            </View>
-            {i < 5 && <View style={styles.solarPanelDivider} />}
-          </React.Fragment>
-        ))}
-      </View>
+      <SolarPanelDisplay
+        borderWidth={BUTTON_BORDER.WIDTH * 2}
+        borderColor="#16A34A"
+        marginTop={SCREEN_HEIGHT * 0.01}
+        marginBottom={SPACING.MARGIN_SMALL}
+      />
       
       <View style={styles.gameContent}>
         {/* Level Number Container */}
@@ -158,7 +163,34 @@ export default function GameScreen({
         >
           <View style={styles.targetContainer}>
             <View style={styles.targetInnerBorder} />
-            <Text style={styles.targetNumber}>{gameState.target}</Text>
+            {/* Target number with digit spacing (includes faded 8s for empty slots) */}
+            <View style={styles.targetNumberContainer}>
+              {(() => {
+                const targetDigits = gameState.target.toString().split('');
+                const totalPositions = 4;
+                const numEmptySlots = totalPositions - targetDigits.length;
+                
+                return Array.from({ length: totalPositions }, (_, i) => {
+                  const isFaded = i < numEmptySlots;
+                  const digit = isFaded ? '8' : targetDigits[i - numEmptySlots];
+                  const isLast = i === totalPositions - 1;
+                  
+                  return (
+                    <View key={i} style={[
+                      styles.digitContainer,
+                      isLast && styles.digitContainerLast
+                    ]}>
+                      <Text style={[
+                        styles.targetNumberDigit,
+                        isFaded && styles.targetNumberDigitFaded
+                      ]}>
+                        {digit}
+                      </Text>
+                    </View>
+                  );
+                });
+              })()}
+            </View>
           </View>
         </View>
 
@@ -379,6 +411,7 @@ export default function GameScreen({
             },
           ]}>
             <View style={styles.historyInnerBorder} />
+            <View style={styles.historyContentWrapper}>
             {(() => {
               const maxEntries = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
               const lines = [];
@@ -411,16 +444,18 @@ export default function GameScreen({
               
               return lines;
             })()}
+            </View>
           </View>
         </View>
 
         {/* Library button at bottom right */}
-        <View style={styles.libraryButtonContainer}>
+       
+      </View>
+      <View style={styles.libraryButtonContainer}>
           <LibraryButton
             onPress={onOpenLevelLibrary}
           />
         </View>
-      </View>
     </View>
   );
 }
@@ -433,44 +468,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingHorizontal: SPACING.CONTAINER_PADDING_HORIZONTAL,
     paddingTop: SPACING.CONTAINER_PADDING_TOP,
-  },
-  titleContainer: {
-    backgroundColor: '#4ADE80', // Vibrant green for solar panel container
-    paddingVertical: SCREEN_HEIGHT * 0.004, // Slightly increased padding
-    paddingHorizontal: SCREEN_WIDTH * 0.025, // Slightly increased padding
-    borderRadius: SCREEN_HEIGHT * 0.008, // Slightly larger border radius
-    marginTop: SCREEN_HEIGHT * 0.01,
-    marginBottom: SPACING.MARGIN_MEDIUM,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: SCREEN_HEIGHT * 0.045, // Increased height
-    width: SCREEN_WIDTH * 0.45, // Increased width
-    alignSelf: 'center', // Center horizontally
-    // Small dark gray border around solar panel
-    borderWidth: 1,
-    borderColor: '#666666', // Dark gray border
-    // Create rectangular solar panel cells
-    overflow: 'hidden',
-  },
-  solarPanelCell: {
-    flex: 1,
-    height: '100%',
-    backgroundColor: '#22C55E', // Darker vibrant green for individual solar panel cells
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  solarPanelDivider: {
-    width: 2,
-    height: '100%',
-    backgroundColor: '#4ADE80', // Same as container background for vertical bar
-  },
-  titleLetter: {
-    fontSize: SCREEN_HEIGHT * 0.028, // Slightly larger to match bigger container
-    fontFamily: 'Digital-7-Mono',
-    color: '#FFFFFF', // White text to complement vibrant green solar panel
-    textAlign: 'center',
-    includeFontPadding: false, // Prevent extra padding that could cause cutoff
   },
   homeButtonContainer: {
     position: 'absolute',
@@ -485,13 +482,11 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     width: '100%' as const,
-    paddingTop: SPACING.PADDING_MEDIUM,
   },
   levelNumberContainer: {
     width: '100%' as const,
     alignItems: 'center',
-    marginTop: -SCREEN_HEIGHT * 0.015, // Shift up by 1.5% of screen height
-    marginBottom: SPACING.MARGIN_SMALL,
+    paddingBottom: CALCULATOR_DISPLAY.PADDING_VERTICAL,
   },
   targetContainerWrapper: {
     width: '100%' as const,
@@ -515,10 +510,10 @@ const styles = StyleSheet.create({
     borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
     borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
     borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
-    borderTopWidth: BUTTON_BORDER.WIDTH * 5, // Increased border size
-    borderLeftWidth: BUTTON_BORDER.WIDTH * 5,
-    borderRightWidth: BUTTON_BORDER.WIDTH * 5,
-    borderBottomWidth: BUTTON_BORDER.WIDTH * 5,
+    borderTopWidth: BUTTON_BORDER.WIDTH * 3, // Reduced border size
+    borderLeftWidth: BUTTON_BORDER.WIDTH * 3,
+    borderRightWidth: BUTTON_BORDER.WIDTH * 3,
+    borderBottomWidth: BUTTON_BORDER.WIDTH * 3,
     // Subtle glisten effect with shadow
     shadowColor: '#A0A0A0',
     shadowOffset: { width: 0, height: 1 },
@@ -530,19 +525,73 @@ const styles = StyleSheet.create({
   },
   targetInnerBorder: {
     position: 'absolute',
-    top: BUTTON_BORDER.WIDTH * 5 + 2, // Outer border width + small gap
-    left: BUTTON_BORDER.WIDTH * 5 + 2,
-    right: BUTTON_BORDER.WIDTH * 5 + 2,
-    bottom: BUTTON_BORDER.WIDTH * 5 + 2,
+    top: BUTTON_BORDER.WIDTH * 3 + 2, // Outer border width + small gap
+    left: BUTTON_BORDER.WIDTH * 3 + 2,
+    right: BUTTON_BORDER.WIDTH * 3 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 3 + 2,
     backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
-    borderRadius: Math.max(0, CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2), // Ensure non-negative
+    borderRadius: Math.max(0, CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 3) - 2), // Ensure non-negative
     zIndex: 0, // Behind text
+  },
+  fadedEightsContainer: {
+    position: 'absolute',
+    top: BUTTON_BORDER.WIDTH * 3 + 2,
+    left: BUTTON_BORDER.WIDTH * 3 + 2,
+    right: BUTTON_BORDER.WIDTH * 3 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 3 + 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 0,
+  },
+  fadedEightsText: {
+    fontSize: FONT_SIZES.TARGET_NUMBER,
+    color: COLORS.TEXT_SUCCESS,
+    fontFamily: 'Digital-7-Mono',
+    letterSpacing: LETTER_SPACING.WIDE,
+    opacity: 0.08, // Very faded
+    includeFontPadding: false,
+  },
+  targetNumberContainer: {
+    position: 'absolute',
+    top: BUTTON_BORDER.WIDTH * 3 + 2,
+    left: BUTTON_BORDER.WIDTH * 3 + 2,
+    right: BUTTON_BORDER.WIDTH * 3 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 3 + 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: containerPadding, // Add small padding to prevent edge cutoff
+    zIndex: 1,
+  },
+  digitContainer: {
+    width: actualDigit8Width, // Fixed width based on actual "8" measurement - ensures even spacing for all digits
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: digitSpacing, // Calculated spacing based on mobile container size
+  },
+  digitContainerLast: {
+    marginRight: 0, // Remove margin from last digit
+  },
+  targetNumberDigit: {
+    fontSize: FONT_SIZES.TARGET_NUMBER,
+    color: COLORS.TEXT_SUCCESS,
+    fontFamily: 'Digital-7-Mono',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    lineHeight: FONT_SIZES.TARGET_NUMBER * 0.95,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 3,
+    opacity: 1,
+  },
+  targetNumberDigitFaded: {
+    opacity: 0.08, // Very faded for empty slots
   },
   targetNumber: {
     fontSize: FONT_SIZES.TARGET_NUMBER,
     color: COLORS.TEXT_SUCCESS,
     fontFamily: 'Digital-7-Mono',
-    letterSpacing: LETTER_SPACING.WIDE,
     textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,
@@ -556,7 +605,6 @@ const styles = StyleSheet.create({
   digitsContainerWrapper: {
     width: '100%' as const,
     alignItems: 'center',
-    marginBottom: SPACING.MARGIN_SMALL,
   },
   digitsContainer: {
     flexDirection: 'row',
@@ -581,7 +629,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    margin: 8,
 
   },
   digitButtonFirstSelected: {
@@ -607,7 +654,8 @@ const styles = StyleSheet.create({
   operationsContainerWrapper: {
     width: '100%' as const,
     alignItems: 'center',
-    marginBottom: SPACING.MARGIN_SMALL,
+    paddingTop: SPACING.MARGIN_SMALL, // Additional top padding for operation row
+    marginBottom: SPACING.MARGIN_SMALL, // Spacing before history box
   },
   operationsContainer: {
     flexDirection: 'row',
@@ -629,12 +677,10 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    margin: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
   },
   operationButtonSelected: {
     backgroundColor: '#1976D2',
@@ -656,10 +702,10 @@ const styles = StyleSheet.create({
   },
   historyContainer: {
     alignItems: 'flex-start',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     backgroundColor: COLORS.BACKGROUND_DARK,
     paddingHorizontal: CALCULATOR_DISPLAY.PADDING_HORIZONTAL,
-    paddingTop: SCREEN_HEIGHT * 0.008, // Reduced top padding to decrease gap from inner border
+    paddingTop: CALCULATOR_DISPLAY.PADDING_VERTICAL,
     paddingBottom: CALCULATOR_DISPLAY.PADDING_VERTICAL,
     borderRadius: CALCULATOR_DISPLAY.BORDER_RADIUS,
     width: CALCULATOR_DISPLAY.WIDTH,
@@ -669,10 +715,10 @@ const styles = StyleSheet.create({
     borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
     borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
     borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
-    borderTopWidth: BUTTON_BORDER.WIDTH * 5, // Increased border size
-    borderLeftWidth: BUTTON_BORDER.WIDTH * 5,
-    borderRightWidth: BUTTON_BORDER.WIDTH * 5,
-    borderBottomWidth: BUTTON_BORDER.WIDTH * 5,
+    borderTopWidth: BUTTON_BORDER.WIDTH * 3, // Reduced border size
+    borderLeftWidth: BUTTON_BORDER.WIDTH * 3,
+    borderRightWidth: BUTTON_BORDER.WIDTH * 3,
+    borderBottomWidth: BUTTON_BORDER.WIDTH * 3,
     // Subtle glisten effect with shadow
     shadowColor: '#A0A0A0',
     shadowOffset: { width: 0, height: 1 },
@@ -684,13 +730,22 @@ const styles = StyleSheet.create({
   },
   historyInnerBorder: {
     position: 'absolute',
-    top: BUTTON_BORDER.WIDTH * 5 + 2, // Outer border width + small gap
-    left: BUTTON_BORDER.WIDTH * 5 + 2,
-    right: BUTTON_BORDER.WIDTH * 5 + 2,
-    bottom: BUTTON_BORDER.WIDTH * 5 + 2,
+    top: BUTTON_BORDER.WIDTH * 3 + 2, // Outer border width + small gap
+    left: BUTTON_BORDER.WIDTH * 3 + 2,
+    right: BUTTON_BORDER.WIDTH * 3 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 3 + 2,
     backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
-    borderRadius: Math.max(0, CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 5) - 2), // Ensure non-negative
+    borderRadius: Math.max(0, CALCULATOR_DISPLAY.BORDER_RADIUS - (BUTTON_BORDER.WIDTH * 3) - 2), // Ensure non-negative
     zIndex: 0, // Behind text
+  },
+  historyContentWrapper: {
+    flex: 1,
+    paddingTop: HISTORY_BOX.INNER_PADDING,
+    paddingBottom: HISTORY_BOX.INNER_PADDING,
+    paddingLeft: HISTORY_BOX.INNER_PADDING,
+    paddingRight: HISTORY_BOX.INNER_PADDING,
+    justifyContent: 'center',
+    zIndex: 1,
   },
   historyBar: {
     flexDirection: 'row',
@@ -701,8 +756,8 @@ const styles = StyleSheet.create({
     // No special styling needed for last bar
   },
   historyNumberContainer: {
-    width: SCREEN_WIDTH * 0.06, // Fixed width column for right-aligned numbers
-    alignItems: 'flex-end',
+    width: SCREEN_WIDTH * 0.06, // Fixed width column for numbers
+    alignItems: 'flex-start',
     justifyContent: 'center',
     marginRight: SPACING.MARGIN_MEDIUM, // Increased gap between number and equation
     flexShrink: 0, // Prevent shrinking
@@ -712,7 +767,7 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_SUCCESS, // Green when filled
     fontFamily: 'Digital-7-Mono',
     letterSpacing: LETTER_SPACING.TIGHT,
-    textAlign: 'right',
+    textAlign: 'left', // Left-align numbers
   },
   historyNumberEmpty: {
     color: '#3A3A3A', // Lighter version of background (#2C2C2C) - looks like an imprint on calculator screen
@@ -741,8 +796,8 @@ const styles = StyleSheet.create({
   },
   libraryButtonContainer: {
     position: 'absolute',
-    bottom: SPACING.CONTAINER_PADDING_TOP + SCREEN_HEIGHT * 0.025, // Lowered by another 0.5% (was 0.03, now 0.025)
-    right: SPACING.CONTAINER_PADDING_HORIZONTAL, // Same right distance as settings button
+    bottom: SPACING.CONTAINER_PADDING_TOP + SCREEN_HEIGHT * 0.025,
+    right: SPACING.CONTAINER_PADDING_HORIZONTAL,
     width: BUTTON_SIZES.NAV_ARROW_SIZE,
     height: BUTTON_SIZES.NAV_ARROW_SIZE,
     zIndex: 10,

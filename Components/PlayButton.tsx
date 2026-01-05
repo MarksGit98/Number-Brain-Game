@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { TouchableOpacity, StyleSheet, Animated, Text, View, ViewStyle, TextStyle, Dimensions } from 'react-native';
-import { FONT_SIZES, CALCULATOR_DISPLAY, LETTER_SPACING, SPACING, COLORS, ANIMATION, BUTTON_BORDER } from '../constants/sizing';
+import { FONT_SIZES, CALCULATOR_DISPLAY, LETTER_SPACING, SPACING, COLORS, ANIMATION, BUTTON_BORDER, SCREEN_DIMENSIONS } from '../constants/sizing';
 import { TEXT_SHADOW_BOLD_STRONG } from '../constants/fonts';
 import { soundManager } from '../utils/soundManager';
 
@@ -57,40 +57,51 @@ export default function PlayButton({
   };
 
   // Chyron animation - scrolls text horizontally (matches CSS chyronWrap)
-  // Animation goes: 100% -> -100% -> 100% over 10 seconds
+  // Animation goes: 100% -> -100% -> 100% over 8 seconds (faster)
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        // Move from right (100%) to left (-100%) - takes 50% of animation (5 seconds)
+        // Move from left to right - takes 50% of animation (4 seconds)
         Animated.timing(chyronAnim, {
           toValue: 1,
-          duration: 5000,
+          duration: 4000,
           useNativeDriver: true,
         }),
-        // Move back from left (-100%) to right (100%) - takes 50% of animation (5 seconds)
+        // Move back from right to left - takes 50% of animation (4 seconds)
         Animated.timing(chyronAnim, {
           toValue: 2,
-          duration: 5000,
+          duration: 4000,
           useNativeDriver: true,
         }),
       ])
     ).start();
   }, []);
 
-  // Calculate translation range based on button width
-  // CSS translateX(100%) means translate by 100% of element width
-  // For chyron effect, we want text to scroll across the button width
+  // Calculate translation range based on inner border area
+  // Text should animate within the inner border bounds
   const buttonWidth = CALCULATOR_DISPLAY.WIDTH;
-  const textWidth = buttonWidth * 0.3; // Approximate text width (PLAY is roughly 30% of button width)
+  const borderWidth = BUTTON_BORDER.WIDTH * 5;
+  const innerBorderOffset = borderWidth + 2; // Border width + small gap
+  const innerWidth = buttonWidth - (innerBorderOffset * 2); // Available width inside inner border
   
-  // Interpolate translateX: 0 -> 1 -> 2 maps to +textWidth -> -textWidth -> +textWidth
-  // This creates the scrolling effect where text moves from right to left and back
+  // Estimate text width - "PLAY" with letter spacing (using reduced font size)
+  const letterSpacing = LETTER_SPACING.WIDE;
+  const playButtonTextSize = FONT_SIZES.PLAY_BUTTON_TEXT * 0.85; // Match the reduced font size in styles
+  const estimatedTextWidth = (playButtonTextSize * 4) + (letterSpacing * 3); // 4 chars + 3 spaces
+  
+  // Scroll range: ensure text stays within inner border bounds
+  // Maximum scroll is half the difference between inner width and text width
+  // Add minimum scroll range to ensure animation is visible even if calculation is small
+  const calculatedScrollRange = (innerWidth - estimatedTextWidth) / 2;
+  const minScrollRange = SCREEN_DIMENSIONS.WIDTH * 0.05; // Minimum scroll range to ensure visibility
+  const maxScrollRange = Math.max(minScrollRange, calculatedScrollRange);
+  
+  // Interpolate translateX: 0 -> 1 -> 2 maps to -maxScrollRange -> +maxScrollRange -> -maxScrollRange
+  // This creates the left-to-right scrolling effect where text moves within inner border bounds
   const translateX = chyronAnim.interpolate({
     inputRange: [0, 1, 2],
-    outputRange: [textWidth, -textWidth, textWidth],
+    outputRange: [-maxScrollRange, maxScrollRange, -maxScrollRange],
   });
-
-  const borderWidth = BUTTON_BORDER.WIDTH * 5;
 
   return (
     <Animated.View
@@ -167,11 +178,14 @@ const styles = StyleSheet.create({
     display: 'flex', // Ensure flex layout
   },
   buttonInner: {
-    width: '100%' as const,
-    height: '100%' as const,
+    position: 'absolute' as const,
+    top: BUTTON_BORDER.WIDTH * 5 + 2, // Match inner border position
+    left: BUTTON_BORDER.WIDTH * 5 + 2,
+    right: BUTTON_BORDER.WIDTH * 5 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 5 + 2,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden' as const,
+    overflow: 'hidden' as const, // Clip text to inner border area
     display: 'flex' as const,
   },
   textContainer: {
@@ -179,14 +193,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center' as const,
   },
   text: {
-    fontSize: FONT_SIZES.PLAY_BUTTON_TEXT,
+    fontSize: FONT_SIZES.PLAY_BUTTON_TEXT * 0.85, // Reduced font size for chyron
     color: COLORS.TEXT_SUCCESS,
     fontFamily: 'Digital-7-Mono',
     letterSpacing: LETTER_SPACING.WIDE,
     textAlign: 'center',
     textAlignVertical: 'center',
     includeFontPadding: false,
-    lineHeight: FONT_SIZES.PLAY_BUTTON_TEXT * 0.95, // Slightly reduced to account for font metrics
+    lineHeight: FONT_SIZES.PLAY_BUTTON_TEXT * 0.85 * 0.95, // Adjusted line height to match reduced font size
     // Enhanced shadow for 3D pop effect (matching targetNumber in GameScreen)
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 2, height: 2 },

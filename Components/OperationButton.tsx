@@ -1,9 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { TouchableOpacity, StyleSheet, Animated, Text, View, ViewStyle, TextStyle } from 'react-native';
-import { BUTTON_SIZES, FONT_SIZES, SHADOW, BUTTON_BORDER, ANIMATION, COLORS, SHADOW_OFFSETS, NUMERIC_CONSTANTS, ELEVATION, PADDING_VALUES } from '../constants/sizing';
-import { Dimensions } from 'react-native';
-
-const SCREEN_HEIGHT = Dimensions.get('window').height;
+import { TouchableOpacity, StyleSheet, Animated, Text, ViewStyle, TextStyle } from 'react-native';
+import { BUTTON_SIZES, BUTTON_BORDER, ANIMATION, COLORS, SHADOW_OFFSETS, NUMERIC_CONSTANTS, ELEVATION, PADDING_VALUES } from '../constants/sizing';
 
 interface OperationButtonProps {
   operation: string;
@@ -25,26 +22,94 @@ export default function OperationButton({
   const translateXAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
   const shadowOpacityAnim = useRef(new Animated.Value(1)).current;
+  const isPressedRef = useRef(false);
+
+  // Map operation symbols to match web version
+  const displaySymbol = operation === '*' ? '×' : operation === '/' ? '÷' : operation === '+' ? '＋' : operation === '-' ? '−' : operation;
+  
+  // Adjust vertical alignment for different symbols to center them properly (matching web version)
+  // Scale adjustments proportionally with button size
+  const verticalAdjustmentScale = BUTTON_SIZES.OPERATION_BUTTON_SIZE / 100; // Scale factor based on button size
+  const getVerticalAdjustment = () => {
+    // Fine-tune each symbol for visual centering - may need different values per symbol
+    // Using larger multipliers for better visual centering
+    if (operation === '+') return [{ translateY: 16 * verticalAdjustmentScale }]; // Plus needs to move down even more to center
+    if (operation === '-') return [{ translateY: -1 * verticalAdjustmentScale }]; // Minus needs to move up
+    if (operation === '*') return [{ translateY: -1 * verticalAdjustmentScale }]; // Multiplication needs to move up
+    if (operation === '/') return [{ translateY: -1 * verticalAdjustmentScale }]; // Division needs to move up
+    return [{ translateY: 0 }];
+  };
+
+  // Handle press in (button pressed down)
+  const handlePressIn = () => {
+    if (!disabled && !isSelected) {
+      isPressedRef.current = true;
+      const shadowOffset = SHADOW_OFFSETS.CIRCULAR.width;
+      Animated.parallel([
+        Animated.timing(translateXAnim, {
+          toValue: shadowOffset,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: shadowOffset,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacityAnim, {
+          toValue: ANIMATION.OPACITY_HIDDEN,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  };
+
+  // Handle press out (button released)
+  const handlePressOut = () => {
+    if (!disabled && !isSelected) {
+      isPressedRef.current = false;
+      Animated.parallel([
+        Animated.timing(translateXAnim, {
+          toValue: ANIMATION.TRANSLATE_X_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: ANIMATION.TRANSLATE_Y_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacityAnim, {
+          toValue: ANIMATION.OPACITY_FULL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  };
 
   // Animate between unselected and selected states
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(translateXAnim, {
-        toValue: isSelected ? ANIMATION.TRANSLATE_X_SELECTED : ANIMATION.TRANSLATE_X_NORMAL,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: isSelected ? ANIMATION.TRANSLATE_Y_SELECTED : ANIMATION.TRANSLATE_Y_NORMAL,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shadowOpacityAnim, {
-        toValue: isSelected ? ANIMATION.OPACITY_HIDDEN : ANIMATION.OPACITY_FULL,
-        duration: ANIMATION.DURATION_FAST,
-        useNativeDriver: false,
-      }),
-    ]).start();
+    if (!isPressedRef.current) {
+      Animated.parallel([
+        Animated.timing(translateXAnim, {
+          toValue: isSelected ? ANIMATION.TRANSLATE_X_SELECTED : ANIMATION.TRANSLATE_X_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: isSelected ? ANIMATION.TRANSLATE_Y_SELECTED : ANIMATION.TRANSLATE_Y_NORMAL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacityAnim, {
+          toValue: isSelected ? ANIMATION.OPACITY_HIDDEN : ANIMATION.OPACITY_FULL,
+          duration: ANIMATION.DURATION_FAST,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
   }, [isSelected, translateXAnim, translateYAnim, shadowOpacityAnim]);
 
   return (
@@ -66,6 +131,8 @@ export default function OperationButton({
             shadowOpacity: shadowOpacityAnim,
             shadowOffset: SHADOW_OFFSETS.CIRCULAR,
             shadowRadius: 0, // Solid black shadow (matches other buttons)
+            borderWidth: BUTTON_BORDER.WIDTH,
+            borderColor: BUTTON_BORDER.COLOR,
           },
           isSelected && styles.buttonSelected,
           disabled && styles.buttonDisabled,
@@ -74,17 +141,23 @@ export default function OperationButton({
       >
         <TouchableOpacity
           onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
           disabled={disabled}
           activeOpacity={1}
           style={styles.buttonInner}
         >
-          <Text style={[
-            styles.text,
-            operation === '+' && styles.textPlus, // Special centering for plus symbol
-            textStyle
-          ]}>
-            {operation === '*' ? '×' : operation === '/' ? '÷' : operation === '+' ? '＋' : operation === '-' ? '−' : operation}
-          </Text>
+          <Animated.Text 
+            style={[
+              styles.text,
+              {
+                transform: getVerticalAdjustment(),
+              },
+              textStyle
+            ]}
+          >
+            {displaySymbol}
+          </Animated.Text>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>
@@ -97,10 +170,7 @@ const styles = StyleSheet.create({
     height: BUTTON_SIZES.OPERATION_BUTTON_SIZE,
     backgroundColor: COLORS.BUTTON_ORANGE,
     borderRadius: BUTTON_SIZES.OPERATION_BUTTON_SIZE / NUMERIC_CONSTANTS.DIVIDE_BY_2, // Circular
-    margin: BUTTON_SIZES.OPERATION_BUTTON_MARGIN,
-    borderWidth: BUTTON_BORDER.WIDTH,
-    borderColor: BUTTON_BORDER.COLOR,
-    elevation: ELEVATION.NONE,
+    margin: BUTTON_SIZES.OPERATION_BUTTON_MARGIN * 0.5, // Reduced margin to match web version
   },
   buttonInner: {
     width: '100%' as const,
@@ -109,7 +179,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    padding: PADDING_VALUES.ZERO, // Ensure no padding affects centering
   },
   buttonSelected: {
     backgroundColor: COLORS.BUTTON_ORANGE_DARK,
@@ -117,22 +186,15 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     backgroundColor: COLORS.BACKGROUND_DISABLED,
     shadowOpacity: ANIMATION.OPACITY_SHADOW_MEDIUM,
-    elevation: ELEVATION.NONE,
     opacity: ANIMATION.OPACITY_DISABLED,
   },
   text: {
-    fontSize: FONT_SIZES.OPERATION_SYMBOL * NUMERIC_CONSTANTS.FONT_MULTIPLIER_FULL,
-    fontWeight: '900' as const, // Extra bold for bolder appearance
+    fontSize: BUTTON_SIZES.OPERATION_BUTTON_SIZE * 0.85, // Scale font size proportionally to button size (matching web version)
     color: COLORS.TEXT_WHITE,
     fontFamily: 'Digital-7-Mono',
     textAlign: 'center',
     textAlignVertical: 'center',
-    includeFontPadding: false,
-    lineHeight: FONT_SIZES.OPERATION_SYMBOL * NUMERIC_CONSTANTS.FONT_MULTIPLIER_FULL,
-  },
-  textPlus: {
-    // Offset the plus symbol lower so it appears centered (scaled by screen height)
-    transform: [{ translateY: SCREEN_HEIGHT * 0.008 }], // Offset down based on screen height for proper scaling
+    lineHeight: BUTTON_SIZES.OPERATION_BUTTON_SIZE * 0.85, // Match font size for proper vertical centering
   },
 });
 

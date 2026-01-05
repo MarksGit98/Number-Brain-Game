@@ -111,7 +111,7 @@ export default function DifficultyButton({
 const styles = StyleSheet.create({
   button: {
     width: BUTTON_SIZES.DIFFICULTY_BUTTON_WIDTH,
-    borderRadius: BORDER_RADIUS.LARGE,
+    borderRadius: BORDER_RADIUS.XLARGE * 1.5, // Increased to make more rounded
     marginBottom: BUTTON_SIZES.DIFFICULTY_BUTTON_MARGIN_BOTTOM,
     borderWidth: BUTTON_BORDER.WIDTH,
     borderColor: BUTTON_BORDER.COLOR,
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   buttonInner: {
     paddingVertical: BUTTON_SIZES.DIFFICULTY_BUTTON_PADDING_VERTICAL,
     paddingHorizontal: BUTTON_SIZES.DIFFICULTY_BUTTON_PADDING_HORIZONTAL,
-    borderRadius: BORDER_RADIUS.LARGE,
+    borderRadius: BORDER_RADIUS.XLARGE * 1.5, // Increased to make more rounded
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

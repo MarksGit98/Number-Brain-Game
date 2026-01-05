@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Modal, StyleSheet, View, Text, TouchableOpacity, TouchableWithoutFeedback, Animated, Platform, Linking } from 'react-native';
 import { SCREEN_DIMENSIONS, SPACING, COLORS, FONT_SIZES, BORDER_RADIUS, BUTTON_BORDER, SHADOW_OFFSETS, ANIMATION } from '../constants/sizing';
 import { soundManager } from '../utils/soundManager';
+import PressableButton3D from './PressableButton3D';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -106,7 +107,7 @@ function ButtonWithAnimation({ onPress, children, style, textStyle, buttonStyle 
           activeOpacity={1}
           style={styles.buttonInner}
         >
-          <Text style={textStyle}>{children}</Text>
+          <Text style={textStyle} numberOfLines={1} ellipsizeMode="tail">{children}</Text>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>
@@ -198,18 +199,18 @@ export default function SettingsModal({
               {/* Developer Mode Toggle removed - internal only, not visible to users */}
 
               {/* Privacy Policy Link */}
-              <TouchableOpacity
+              <PressableButton3D
                 onPress={() => {
-                  soundManager.playSound('buttonPress');
                   if (onPrivacyPolicyPress) {
                     onPrivacyPolicyPress();
                   }
                 }}
                 style={styles.privacyPolicyLink}
-                activeOpacity={0.7}
+                textStyle={styles.privacyPolicyLinkText}
+                variant="neutral"
               >
-                <Text style={styles.privacyPolicyLinkText}>Privacy Policy</Text>
-              </TouchableOpacity>
+                Privacy Policy
+              </PressableButton3D>
 
               {/* Ad-Free Purchase Button - only show if not ad-free */}
               {!isAdFree && (
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
     alignItems: 'center' as const,
-    marginBottom: SPACING.MARGIN_MEDIUM,
+    marginBottom: SPACING.MARGIN_SMALL,
     paddingVertical: SPACING.PADDING_SMALL / 2,
   },
   settingLabel: {
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
   },
   purchaseButtonText: {
     color: COLORS.BACKGROUND_WHITE,
-    fontSize: FONT_SIZES.BUTTON_TEXT,
+    fontSize: FONT_SIZES.BUTTON_TEXT * 0.9, // Slightly reduced to fit on one line
     fontWeight: '600' as const,
   },
   closeButtonBase: {
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   closeButton: {
-    // Margin handled by parent if needed
+    marginTop: SPACING.MARGIN_SMALL,
   },
   closeButtonText: {
     color: '#000000', // Black font instead of gray
@@ -367,13 +368,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.PADDING_MEDIUM,
     marginBottom: SPACING.MARGIN_SMALL,
     alignItems: 'center' as const,
-    backgroundColor: COLORS.SHADOW_BLACK, // Black background
-    borderRadius: BORDER_RADIUS.SMALL,
+    backgroundColor: COLORS.BACKGROUND_WHITE, // White background (matching web Play Sandbox button)
+    borderRadius: BORDER_RADIUS.MEDIUM,
+    borderWidth: BUTTON_BORDER.WIDTH,
+    borderColor: BUTTON_BORDER.COLOR, // Black border
+    shadowColor: COLORS.SHADOW_BLACK,
+    shadowOffset: { width: 4, height: 4 }, // Action button shadow offset (matching web version - 4px)
+    shadowOpacity: 1,
+    shadowRadius: 0, // Solid black shadow
+    elevation: 0, // Shadow handled by shadowOpacity/shadowRadius
   },
   privacyPolicyLinkText: {
-    color: COLORS.BACKGROUND_WHITE, // White font
+    color: COLORS.TEXT_SECONDARY, // Dark text (matching web Play Sandbox button)
     fontSize: FONT_SIZES.BUTTON_TEXT,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
     textDecorationLine: 'none' as const, // Remove underline
   },
   webVersionButtonBase: {

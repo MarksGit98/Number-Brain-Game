@@ -7,6 +7,7 @@ import DifficultyButton from '../Components/DifficultyButton';
 import SettingsButton from '../Components/SettingsButton';
 import LibraryButton from '../Components/LibraryButton';
 import PressableButton3D from '../Components/PressableButton3D';
+import SolarPanelDisplay from '../Components/SolarPanelDisplay';
 import { SCREEN_DIMENSIONS, FONT_SIZES, SPACING, BUTTON_SIZES, COLORS, BORDER_RADIUS, BUTTON_BORDER } from '../constants/sizing';
 
 const SCREEN_WIDTH = SCREEN_DIMENSIONS.WIDTH;
@@ -38,16 +39,11 @@ export default function MainMenuScreen({
       <View style={styles.settingsButtonContainer}>
         <SettingsButton onPress={onOpenSettings} />
       </View>
-      <View style={styles.titleContainer}>
-        {['D', 'I', 'G', 'I', 'T', 'L'].map((letter, i) => (
-          <React.Fragment key={i}>
-            <View style={styles.solarPanelCell}>
-              <Text style={styles.titleLetter}>{letter}</Text>
-            </View>
-            {i < 5 && <View style={styles.solarPanelDivider} />}
-          </React.Fragment>
-        ))}
-      </View>
+      <SolarPanelDisplay
+        borderWidth={BUTTON_BORDER.WIDTH * 2}
+        borderColor="#16A34A"
+        marginBottom={SPACING.MARGIN_MEDIUM}
+      />
       
       <View style={styles.menuContent}>
         <PlayButton
@@ -120,43 +116,6 @@ const styles = StyleSheet.create({
     maxWidth: SPACING.CONTAINER_PADDING_HORIZONTAL * 20, // ~400px equivalent
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  titleContainer: {
-    backgroundColor: '#4ADE80', // Vibrant green for solar panel container
-    paddingVertical: SCREEN_HEIGHT * 0.004, // Slightly increased padding
-    paddingHorizontal: SCREEN_WIDTH * 0.025, // Slightly increased padding
-    borderRadius: SCREEN_HEIGHT * 0.008, // Slightly larger border radius
-    marginBottom: SPACING.MARGIN_MEDIUM,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: SCREEN_HEIGHT * 0.045, // Increased height
-    width: SCREEN_WIDTH * 0.45, // Increased width
-    alignSelf: 'center', // Center horizontally
-    // Small dark gray border around solar panel
-    borderWidth: 1,
-    borderColor: '#666666', // Dark gray border
-    // Create rectangular solar panel cells
-    overflow: 'hidden',
-  },
-  solarPanelCell: {
-    flex: 1,
-    height: '100%',
-    backgroundColor: '#22C55E', // Darker vibrant green for individual solar panel cells
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  solarPanelDivider: {
-    width: 2,
-    height: '100%',
-    backgroundColor: '#4ADE80', // Same as container background for vertical bar
-  },
-  titleLetter: {
-    fontSize: SCREEN_HEIGHT * 0.028, // Slightly larger to match bigger container
-    fontFamily: 'Digital-7-Mono',
-    color: '#FFFFFF', // White text to complement vibrant green solar panel
-    textAlign: 'center',
-    includeFontPadding: false, // Prevent extra padding that could cause cutoff
   },
   playButton: {
     width: 200,

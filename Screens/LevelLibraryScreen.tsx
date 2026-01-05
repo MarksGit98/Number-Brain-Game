@@ -284,10 +284,10 @@ const styles = StyleSheet.create({
     borderLeftColor: '#909090', // Slightly dimmer metallic gray (left highlight - indirect light, creates depth at corner)
     borderRightColor: '#404040', // Dark metallic gray (right shadow - darker metal)
     borderBottomColor: '#404040', // Dark metallic gray (bottom shadow - matches right)
-    borderTopWidth: BUTTON_BORDER.WIDTH * 5, // Increased border size (matching game screen, scaled)
-    borderLeftWidth: BUTTON_BORDER.WIDTH * 5,
-    borderRightWidth: BUTTON_BORDER.WIDTH * 5,
-    borderBottomWidth: BUTTON_BORDER.WIDTH * 5,
+    borderTopWidth: BUTTON_BORDER.WIDTH * 2.5, // Slightly smaller border
+    borderLeftWidth: BUTTON_BORDER.WIDTH * 2.5,
+    borderRightWidth: BUTTON_BORDER.WIDTH * 2.5,
+    borderBottomWidth: BUTTON_BORDER.WIDTH * 2.5,
     // Subtle glisten effect with shadow
     shadowColor: '#A0A0A0',
     shadowOffset: { width: 0, height: 1 },
@@ -304,12 +304,12 @@ const styles = StyleSheet.create({
   libraryTitleInnerBorder: {
     position: 'absolute',
     // Position inner border inside outer border (scaled for smaller display)
-    top: BUTTON_BORDER.WIDTH * 5 + 2,
-    left: BUTTON_BORDER.WIDTH * 5 + 2,
-    right: BUTTON_BORDER.WIDTH * 5 + 2,
-    bottom: BUTTON_BORDER.WIDTH * 5 + 2,
+    top: BUTTON_BORDER.WIDTH * 2.5 + 2,
+    left: BUTTON_BORDER.WIDTH * 2.5 + 2,
+    right: BUTTON_BORDER.WIDTH * 2.5 + 2,
+    bottom: BUTTON_BORDER.WIDTH * 2.5 + 2,
     backgroundColor: '#1F1F1F', // Slightly darker than BACKGROUND_DARK (#2C2C2C)
-    borderRadius: Math.max(2, (CALCULATOR_DISPLAY.BORDER_RADIUS * 0.68) - (BUTTON_BORDER.WIDTH * 5) - 2), // Scaled border radius
+    borderRadius: Math.max(2, (CALCULATOR_DISPLAY.BORDER_RADIUS * 0.68) - (BUTTON_BORDER.WIDTH * 2.5) - 2), // Scaled border radius
     zIndex: 0, // Behind text
   },
   libraryTitle: {
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     width: '32%',
   },
   difficultyLabelButton: {
-    borderRadius: BORDER_RADIUS.MEDIUM,
+    borderRadius: BORDER_RADIUS.XLARGE, // Increased from MEDIUM to match web version (18px)
     borderWidth: BUTTON_BORDER.WIDTH,
     borderColor: BUTTON_BORDER.COLOR,
     shadowRadius: 0,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   difficultyLabelButtonInner: {
     paddingVertical: SPACING.PADDING_SMALL,
     paddingHorizontal: SPACING.PADDING_SMALL,
-    borderRadius: BORDER_RADIUS.MEDIUM,
+    borderRadius: BORDER_RADIUS.XLARGE, // Increased from MEDIUM to match web version (18px)
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

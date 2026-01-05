@@ -13,7 +13,7 @@ const SCALE = Math.min(SCALE_WIDTH, SCALE_HEIGHT);
 export const FONT_SIZES = {
   TITLE: SCREEN_HEIGHT * 0.048, // Increased font size (~38px on base)
   PLAY_BUTTON: SCREEN_HEIGHT * 0.11, // ~88px on base
-  TARGET_NUMBER: SCREEN_HEIGHT * 0.17, // ~132px on base (increased 10% from 120px)
+  TARGET_NUMBER: SCREEN_HEIGHT * 0.165, // ~132px on base (increased 10% from 120px)
   PLAY_BUTTON_TEXT: SCREEN_HEIGHT * 0.155, // ~18px on base
   DIFFICULTY_BUTTON: SCREEN_HEIGHT * 0.023, // ~18px on base (for game screen)
   DIFFICULTY_BUTTON_LEVELS: SCREEN_HEIGHT * 0.018, // ~14px on base (for levels screen - smaller)
@@ -63,15 +63,15 @@ export const BUTTON_SIZES = {
   
   // Digit buttons - sized to fit 4 tiles on one line
   // 4 tiles + 3 margins = ~92% of screen width, leaving room for padding
-  DIGIT_BUTTON_SIZE: SCREEN_WIDTH * 0.171, // ~64px on base (reduced by 10% from 0.19)
+  DIGIT_BUTTON_SIZE: SCREEN_WIDTH * 0.16245, // Reduced by 5%
   DIGIT_BUTTON_MARGIN: SCREEN_WIDTH * 0.015, // ~6px on base (reduced from 8px)
   
-  // Operation buttons - smaller and circular (reduced by 5% to fit with undo button)
-  OPERATION_BUTTON_SIZE: SCREEN_WIDTH * 0.1425, // ~53px on base (reduced by 5% from 0.15)
+  // Operation buttons - smaller and circular
+  OPERATION_BUTTON_SIZE: SCREEN_WIDTH * 0.135375, // Reduced by 5%
   OPERATION_BUTTON_MARGIN: SCREEN_WIDTH * 0.021, // ~8px on base
   
   // Navigation arrows
-  NAV_ARROW_SIZE: SCREEN_WIDTH * 0.1197, // ~45px on base (reduced by 10% from 0.133)
+  NAV_ARROW_SIZE: SCREEN_WIDTH * 0.113715, // Reduced by 5%
   NAV_ARROW_BOTTOM: SCREEN_HEIGHT * 0.025, // ~20px
   NAV_ARROW_HORIZONTAL: SCREEN_WIDTH * 0.053, // ~20px
 };
@@ -108,19 +108,23 @@ export const HISTORY_BOX = {
   BAR_PADDING_VERTICAL: SCREEN_HEIGHT * 0.005, // Smaller padding between lines
   // BAR_MARGIN_BOTTOM removed - lines are seamless (no margin between bars)
   BAR_BORDER_RADIUS: SCREEN_HEIGHT * 0.007, // ~6px
+  INNER_PADDING: SCREEN_HEIGHT * 0.008, // Inner padding to prevent text from touching inner border
   // Max height calculations for each difficulty (fixed height)
-  // Formula: (padding top + padding bottom) + (number of lines * (bar padding * 2 + text height)) + extra padding for inner border
+  // Formula: (padding top + padding bottom) + (number of lines * (bar padding * 2 + text height)) + extra padding for inner border + inner padding (top + bottom)
   // Text height = SCREEN_HEIGHT * 0.017 * 1.10
   // Added extra padding to prevent final line from being cut off by inner border
   HEIGHT_EASY: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding
                (3 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))) + // 3 lines
-               (SCREEN_HEIGHT * 0.015), // Extra height to prevent cutoff
+               (SCREEN_HEIGHT * 0.015) + // Extra height to prevent cutoff
+               (SCREEN_HEIGHT * 0.008 * 2), // Inner padding top and bottom
   HEIGHT_MEDIUM: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding
                  (4 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))) + // 4 lines
-                 (SCREEN_HEIGHT * 0.015), // Extra height to prevent cutoff
+                 (SCREEN_HEIGHT * 0.015) + // Extra height to prevent cutoff
+                 (SCREEN_HEIGHT * 0.008 * 2), // Inner padding top and bottom
   HEIGHT_HARD: (SCREEN_HEIGHT * 0.015 * 2) + // Top and bottom padding
                (5 * ((SCREEN_HEIGHT * 0.005 * 2) + (SCREEN_HEIGHT * 0.017 * 1.10))) + // 5 lines
-               (SCREEN_HEIGHT * 0.018), // Extra height to prevent cutoff (increased for hard difficulty)
+               (SCREEN_HEIGHT * 0.018) + // Extra height to prevent cutoff (increased for hard difficulty)
+               (SCREEN_HEIGHT * 0.008 * 2), // Inner padding top and bottom
 };
 
 // Border radius
@@ -163,7 +167,7 @@ export const INSET_SHADOW = {
 
 // Button borders
 export const BUTTON_BORDER = {
-  WIDTH: SCREEN_WIDTH * 0.003, // ~1px - thin black border
+  WIDTH: SCREEN_WIDTH * 0.006, // Increased for digit tiles and circular buttons
   COLOR: '#000',
 };
 
@@ -247,8 +251,8 @@ export const COLORS = {
   BUTTON_BLUE_DARKEST: '#13, 71, 161', // Darkest blue (for press overlays)
   
   // Digit button colors
-  DIGIT_FIRST_SELECTED: '#2196F3', // Blue for first selected digit
-  DIGIT_SECOND_SELECTED: '#F44336', // Red for second selected digit
+  DIGIT_FIRST_SELECTED: '#5B9BD5', // More matte blue (desaturated from #2196F3) - matching web version
+  DIGIT_SECOND_SELECTED: '#E57373', // More matte red (desaturated from #F44336) - matching web version
   DIGIT_ERROR: '#D32F2F', // Darker red for error state
   
   // Difficulty colors
@@ -295,8 +299,8 @@ export const COLORS = {
 export const SHADOW_OFFSETS = {
   // Standard shadow offsets
   STANDARD: { width: SCREEN_WIDTH * 0.011, height: SCREEN_HEIGHT * 0.005 }, // ~4px, ~4px
-  STANDARD_ALT: { width: 4, height: 4 }, // 4px, 4px (for digit/operation buttons)
-  CIRCULAR: { width: 2.7, height: 2.7 }, // ~2.7px, ~2.7px (reduced by 10% from 3.0)
+  STANDARD_ALT: { width: 5.5, height: 5.5 }, // Increased for digit tiles - solid black shadow
+  CIRCULAR: { width: 3, height: 3 }, // Increased slightly for more visible shadow
   DIFFICULTY: { width: 4.4, height: 4.4 }, // ~4.4px, ~4.4px (10% larger for difficulty buttons - more depth)
   ZERO: { width: 0, height: 0 }, // No offset (for inset shadows)
   VERTICAL_SMALL: { width: 0, height: 2 }, // Small vertical shadow
