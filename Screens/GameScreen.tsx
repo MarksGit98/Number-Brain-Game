@@ -748,6 +748,7 @@ const styles = StyleSheet.create({
     paddingLeft: HISTORY_BOX.INNER_PADDING,
     paddingRight: HISTORY_BOX.INNER_PADDING,
     flexDirection: 'column',
+    justifyContent: 'center',
     zIndex: 1,
   },
   historyBar: {

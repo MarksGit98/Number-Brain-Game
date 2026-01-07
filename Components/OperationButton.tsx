@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useMemo } from 'react';
-import { TouchableOpacity, StyleSheet, Animated, Text, ViewStyle, TextStyle } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { TouchableOpacity, StyleSheet, Animated, Text, View, ViewStyle, TextStyle } from 'react-native';
 import { BUTTON_SIZES, BUTTON_BORDER, ANIMATION, COLORS, SHADOW_OFFSETS, NUMERIC_CONSTANTS, ELEVATION, PADDING_VALUES } from '../constants/sizing';
 
 interface OperationButtonProps {
@@ -29,18 +29,20 @@ export default function OperationButton({
   
   // Adjust vertical alignment for different symbols to center them properly (matching web version)
   // Scale adjustments proportionally with button size
-  const verticalAdjustmentScale = BUTTON_SIZES.OPERATION_BUTTON_SIZE / 100; // Scale factor based on button size
-  
-  // Memoize the transform to ensure it's calculated correctly on first render
-  const verticalAdjustment = useMemo(() => {
-    // Fine-tune each symbol for visual centering - may need different values per symbol
-    // Using larger multipliers for better visual centering
-    if (operation === '+') return [{ translateY: 16 * verticalAdjustmentScale }]; // Plus needs to move down even more to center
-    if (operation === '-') return [{ translateY: -1 * verticalAdjustmentScale }]; // Minus needs to move up
-    if (operation === '*') return [{ translateY: -1 * verticalAdjustmentScale }]; // Multiplication needs to move up
-    if (operation === '/') return [{ translateY: -1 * verticalAdjustmentScale }]; // Division needs to move up
-    return [{ translateY: 0 }];
-  }, [operation, verticalAdjustmentScale]);
+  // Calculate transform directly as a constant value to ensure it's applied on first render
+  const verticalAdjustmentScale = BUTTON_SIZES.OPERATION_BUTTON_SIZE / 100;
+  let verticalAdjustment: Array<{ translateY: number }>;
+  if (operation === '+') {
+    verticalAdjustment = [{ translateY: 16 * verticalAdjustmentScale }]; // Plus needs to move down even more to center
+  } else if (operation === '-') {
+    verticalAdjustment = [{ translateY: -1 * verticalAdjustmentScale }]; // Minus needs to move up
+  } else if (operation === '*') {
+    verticalAdjustment = [{ translateY: -1 * verticalAdjustmentScale }]; // Multiplication needs to move up
+  } else if (operation === '/') {
+    verticalAdjustment = [{ translateY: -1 * verticalAdjustmentScale }]; // Division needs to move up
+  } else {
+    verticalAdjustment = [{ translateY: 0 }];
+  }
 
   // Handle press in (button pressed down)
   const handlePressIn = () => {
@@ -149,17 +151,16 @@ export default function OperationButton({
           activeOpacity={1}
           style={styles.buttonInner}
         >
-          <Text 
-            style={[
-              styles.text,
-              {
-                transform: verticalAdjustment,
-              },
-              textStyle
-            ]}
-          >
-            {displaySymbol}
-          </Text>
+          <View style={{ transform: verticalAdjustment }}>
+            <Text 
+              style={[
+                styles.text,
+                textStyle
+              ]}
+            >
+              {displaySymbol}
+            </Text>
+          </View>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>
